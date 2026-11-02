@@ -4,6 +4,9 @@ Target: Windows 10 22H2 x64 with current Edge WebView2 Runtime. A Linux cross-bu
 
 - Install per user without administrator rights; find MarkdownPreview through Start search. Uninstall and confirm the Start shortcut and application registration disappear while documents remain intact.
 - Launch a blank window. Confirm `*Bez tytułu - MarkdownPreview`, a responsive editor, and Markdown preview.
+- Check Ctrl+wheel in both panes, Ctrl+plus/minus, Ctrl+0 and zoom bounds (50–300%); confirm ordinary wheel input still scrolls.
+- Check the native title bar and every nested menu and settings dropdown in both light and dark themes. Test theme changes while the application is open.
+- Open Markdown, then JSON, then Markdown again; confirm the preview is visible and updated. Test cold startup with a command-line Markdown path and restore after a failed navigation.
 - Type headings, lists, task lists, tables, fenced code, HTML headings, details, links and local/remote images. Confirm rendering, relative image loading after Save As, and no script execution.
 - Save a scratch document; cancel Save As and verify text and dirty state survive. Save to a read-only location and verify a visible error without data loss.
 - Modify a saved document; test Save, Save As and subsequent Save. Compare original and new files.
