@@ -24,7 +24,7 @@ dotnet run --project src/MarkdownPreview -- "C:\Documents\notes.md"
 ./scripts/package.ps1
 ```
 
-Packaging additionally requires Inno Setup 6. Output: `artifacts/`, with a portable ZIP, per-user installer and SHA-256 checksums. WebView2 remains a shared prerequisite. The GitHub workflow builds Windows packages on pushes; `v*` tags publish a prerelease after successful build/tests.
+Packaging additionally requires Inno Setup 6. Output: `artifacts/`, with a self-contained portable ZIP, a smaller `-framework.zip` requiring .NET 10 Desktop Runtime, a self-contained per-user installer and SHA-256 checksums. WebView2 remains a shared prerequisite. The GitHub workflow builds Windows packages on pushes; `v*` tags publish a prerelease after successful build/tests and a real WPF/WebView2 smoke run.
 
 Linux can run core tests and cross-compile the Windows executable, but cannot run WPF. Complete [Windows acceptance checks](docs/WINDOWS-ACCEPTANCE.md) on the target OS before treating a preview as production-ready.
 
