@@ -6,7 +6,10 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>0.1.2</Version>
+    <Version>0.2.0</Version>
+    <AssemblyName>NeoPad</AssemblyName>
+    <Product>NeoPad</Product>
+    <Description>A minimal Windows editor with live Markdown preview.</Description>
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
