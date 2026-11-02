@@ -38,6 +38,7 @@ jobs:
             Get-Content $report
             throw 'UI test timed out.'
           }
+          if (-not (Test-Path $report)) { "FAILED: application exited with code $($process.ExitCode) before producing its smoke report." | Set-Content $report }
           Get-Content $report
           if ($process.ExitCode -ne 0) { throw "Windows UI test failed with exit code $($process.ExitCode)." }
       - name: Record Windows test outcome
@@ -50,6 +51,11 @@ jobs:
           $sourceCommit = git rev-parse HEAD
           $report = Join-Path $env:RUNNER_TEMP 'windows-ui-result.txt'
           $text = if (Test-Path $report) { Get-Content $report -Raw } else { 'No smoke report was produced.' }
+          $screenshots = @{}
+          foreach ($kind in @('browser', 'window')) {
+            $path = [IO.Path]::ChangeExtension($report, ".$kind.png")
+            if (Test-Path $path) { $screenshots[$kind] = [IO.File]::ReadAllBytes($path) }
+          }
           $receipt = @{
             source_commit = $sourceCommit
             build = $env:BUILD_OUTCOME
@@ -65,4 +71,10 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add "docs/checks/$sourceCommit.json"
           git commit -m 'Recorded Windows preview validation' -m "- Executed WPF and WebView2 against sample documents`n- Preserved test outcome and failure details"
+          foreach ($kind in $screenshots.Keys) {
+            $path = "docs/checks/$sourceCommit.$kind.png"
+            [IO.File]::WriteAllBytes((Join-Path (Get-Location) $path), $screenshots[$kind])
+            git add $path
+            git commit -m "Captured $kind preview rendering" -m "- Preserved sample-document pixels for visual verification"
+          }
           git push origin release-receipts
