@@ -80,6 +80,8 @@ public partial class MainWindow : Window
         WindowTheme.Apply(this, preferences.Theme);
         Editor.Background = Background;
         Editor.Foreground = Foreground;
+        Editor.TextArea.TextView.LinkTextForegroundBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(Palette.Link));
+        Editor.TextArea.TextView.LinkTextBackgroundBrush = Brushes.Transparent;
         Editor.LineNumbersForeground = (Brush)Resources["Muted"];
         Editor.FontFamily = new FontFamily(preferences.Font);
         Editor.FontSize = Math.Clamp(preferences.FontSize, 8, 72) * zoom;
@@ -658,6 +660,7 @@ public partial class MainWindow : Window
             Width = Math.Min(1000, SystemParameters.WorkArea.Width - 40);
             Height = Math.Min(700, SystemParameters.WorkArea.Height - 40);
             Left = 20; Top = 20; Activate();
+            VerifyBuiltIconTransparency();
             Editor.Text = "# Smoke heading\n\n**Rendered**\n\n<h2>HTML heading</h2>";
             if (!Title.StartsWith("*")) throw new InvalidOperationException("Dirty title was not updated.");
             document.Save(Path.Combine(directory, "smoke.md")); UpdateStatus();
@@ -734,7 +737,7 @@ public partial class MainWindow : Window
     /// <summary>Verifies real Ctrl+wheel suppresses scrolling and ordinary wheel input still scrolls both panes.</summary>
     private async Task VerifyWheelGesturesAsync()
     {
-        Editor.Text = "# Wheel heading\n\n" + string.Join("\n\n", Enumerable.Range(1, 100).Select(i => $"Paragraph {i}: sample document content."));
+        Editor.Text = "# Wheel heading\n\n[Example](https://example.com)\n\n" + string.Join("\n\n", Enumerable.Range(1, 100).Select(i => $"Paragraph {i}: sample document content."));
         await VerifyPreviewHeadingAsync("Wheel heading");
         Editor.ScrollToVerticalOffset(200);
         await Preview.CoreWebView2.ExecuteScriptAsync("window.scrollTo(0, 200)");
