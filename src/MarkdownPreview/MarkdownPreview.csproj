@@ -6,7 +6,7 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>0.3.1</Version>
+    <Version>0.3.2</Version>
     <AssemblyName>NeoNote</AssemblyName>
     <Product>NeoNote</Product>
     <Description>A minimal Windows editor with live Markdown preview.</Description>
