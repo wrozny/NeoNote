@@ -11,8 +11,10 @@
     <Product>NeoPad</Product>
     <Description>A minimal Windows editor with live Markdown preview.</Description>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets/NeoPad.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Resource Include="Assets/NeoPad.ico" />
     <ProjectReference Include="../MarkdownPreview.Core/MarkdownPreview.Core.csproj" />
     <PackageReference Include="AvalonEdit" Version="6.3.1.120" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3537.50" />
