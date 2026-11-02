@@ -31,14 +31,24 @@ public partial class MainWindow : Window
     private bool previewNavigationPending;
     private ulong activePreviewNavigation;
     private readonly List<string> previewTrace = [];
-    private bool Dark => preferences.Theme == "Dark" || preferences.Theme == "System" &&
-        Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize", "AppsUseLightTheme", 1) is int value && value == 0;
+    private bool previewHidden;
+    private bool previewLayoutVisible;
+    private double previewShare = 0.5;
+    private bool limitedEditing;
+    private MenuItem? formatDocumentItem;
+    private ThemePalette Palette => WindowTheme.Palette(preferences.Theme);
+    private bool Dark => Palette.IsDark;
+    private bool PreviewVisible => document.Format == FileFormat.Markdown && !previewHidden && !limitedEditing;
+    private bool CanFormat => FileFormatter.Supports(document.Format) && Editor.Document.TextLength <= 1_000_000;
 
     /// <summary>Connects editor events and creates the initial document UI.</summary>
     public MainWindow()
     {
         InitializeComponent();
         Editor.TextArea.TextView.LineTransformers.Add(markers);
+        foreach (var margin in Editor.TextArea.LeftMargins.OfType<ICSharpCode.AvalonEdit.Editing.LineNumberMargin>())
+            margin.Margin = new Thickness(0, 0, 8, 0);
+        Editor.TextArea.LeftMargins.Add(new Border { Width = 8, IsHitTestVisible = false });
         Editor.TextChanged += OnTextChanged;
         Editor.TextArea.Caret.PositionChanged += OnCaretChanged;
         refreshTimer.Tick += OnRefreshTick;
@@ -53,6 +63,9 @@ public partial class MainWindow : Window
         ReplaceAllButton.Click += OnReplaceAll;
         CloseSearchButton.Click += OnCloseSearch;
         RetryPreviewButton.Click += OnRetryPreview;
+        ClosePreviewButton.Click += OnClosePreview;
+        OpenPreviewButton.Click += OnOpenPreview;
+        Divider.DragCompleted += OnDividerDragCompleted;
         Loaded += OnLoaded;
         ApplyPreferences();
         UpdateStatus();
@@ -64,17 +77,20 @@ public partial class MainWindow : Window
     /// <summary>Applies colors, fonts, menus and format highlighting.</summary>
     private void ApplyPreferences()
     {
-        WindowTheme.Apply(this, Dark);
+        WindowTheme.Apply(this, preferences.Theme);
         Editor.Background = Background;
         Editor.Foreground = Foreground;
         Editor.LineNumbersForeground = (Brush)Resources["Muted"];
         Editor.FontFamily = new FontFamily(preferences.Font);
         Editor.FontSize = Math.Clamp(preferences.FontSize, 8, 72) * zoom;
         Editor.WordWrap = preferences.WordWrap;
-        Editor.SyntaxHighlighting = EditorHighlighting.Create(document.Format, Dark);
+        UpdateEditingMode(true);
         Editor.TextArea.Caret.CaretBrush = Foreground;
         EditorHeading.Text = T("Editor"); PreviewHeading.Text = T("Preview");
         RetryPreviewButton.Content = T("Retry");
+        ClosePreviewButton.ToolTip = T("ClosePreview");
+        System.Windows.Automation.AutomationProperties.SetName(ClosePreviewButton, T("ClosePreview"));
+        OpenPreviewButton.Content = T("OpenPreview");
         BuildMenu();
         FindButton.Content = T("Next"); ReplaceButton.Content = T("Replace").Replace("_", ""); ReplaceAllButton.Content = T("ReplaceAll");
         SearchBox.ToolTip = T("Find").Replace("_", ""); ReplaceBox.ToolTip = T("Replace").Replace("_", "");
@@ -126,6 +142,9 @@ public partial class MainWindow : Window
         }
         var layout = Menu("Format");
         var wrap = Item(layout, "Wrap", ToggleWrap); wrap.IsCheckable = true; wrap.IsChecked = preferences.WordWrap;
+        formatDocumentItem = Item(layout, "FormatDocument", FormatDocument, "Ctrl+Shift+F");
+        formatDocumentItem.IsEnabled = CanFormat;
+        formatDocumentItem.ToolTip = T("FormattingSupport");
         Item(MainMenu, "Settings", ShowSettings);
     }
 
@@ -134,7 +153,7 @@ public partial class MainWindow : Window
     {
         try { action(); }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException or System.Runtime.InteropServices.COMException)
-        { MessageBox.Show(this, error.Message, T("Error"), MessageBoxButton.OK, MessageBoxImage.Error); }
+        { Inform(error is DocumentTooLargeException ? T("FileTooLarge") : error.Message, T("Error")); }
     }
 
     /// <summary>Shows a file picker after resolving unsaved edits.</summary>
@@ -159,7 +178,7 @@ public partial class MainWindow : Window
     private void NewDocument()
     {
         if (!ConfirmDiscard()) return;
-        document = new(); Editor.Text = ""; Editor.Document.UndoStack.ClearAll(); ApplyPreferences(); UpdateStatus();
+        document = new(); previewHidden = false; Editor.Text = ""; Editor.Document.UndoStack.ClearAll(); ApplyPreferences(); UpdateStatus();
     }
 
     /// <summary>Creates an independent window in the current process.</summary>
@@ -169,7 +188,7 @@ public partial class MainWindow : Window
     private bool ConfirmDiscard()
     {
         if (!document.IsDirty || document.Path is null && document.Text.Length == 0) return true;
-        return MessageBox.Show(this, T("Unsaved"), "MarkdownPreview", MessageBoxButton.YesNoCancel, MessageBoxImage.Question) switch
+        return Ask(T("Unsaved"), true) switch
         { MessageBoxResult.Yes => Save(false), MessageBoxResult.No => true, _ => false };
     }
 
@@ -185,7 +204,7 @@ public partial class MainWindow : Window
             if (dialog.ShowDialog(this) != true) return false;
             path = dialog.FileName;
         }
-        if (path == document.Path && document.HasExternalChanges() && MessageBox.Show(this, T("External"), "MarkdownPreview", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return false;
+        if (path == document.Path && document.HasExternalChanges() && Ask(T("External")) != MessageBoxResult.Yes) return false;
         document.Save(path); UpdateStatus(); ScheduleRefresh(); return true;
     }
 
@@ -194,7 +213,7 @@ public partial class MainWindow : Window
     {
         if (closing) return;
         try { e.Cancel = !ConfirmDiscard(); }
-        catch (Exception error) { e.Cancel = true; MessageBox.Show(this, error.Message, T("Error")); }
+        catch (Exception error) { e.Cancel = true; Inform(error.Message, T("Error")); }
         if (e.Cancel) return;
         closing = true; revision++; refreshTimer.Stop(); Preview.Dispose();
     }
@@ -206,7 +225,7 @@ public partial class MainWindow : Window
         checkingExternal = true;
         try
         {
-            if (MessageBox.Show(this, T("Reload"), "MarkdownPreview", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+            if (Ask(T("Reload")) != MessageBoxResult.Yes) return;
             OpenPath(document.Path);
         }
         finally { checkingExternal = false; }
@@ -219,7 +238,15 @@ public partial class MainWindow : Window
     }
 
     /// <summary>Synchronizes edited text and invalidates pending background results.</summary>
-    private void OnTextChanged(object? sender, EventArgs e) { document.Text = Editor.Text; UpdateStatus(); ScheduleRefresh(); }
+    private void OnTextChanged(object? sender, EventArgs e)
+    {
+        document.Text = Editor.Text;
+        var previous = limitedEditing;
+        UpdateEditingMode();
+        if (previous != limitedEditing) { BuildMenu(); UpdateFormatVisibility(); }
+        if (formatDocumentItem is not null) formatDocumentItem.IsEnabled = CanFormat;
+        UpdateStatus(); ScheduleRefresh();
+    }
 
     /// <summary>Refreshes cursor information without reparsing text.</summary>
     private void OnCaretChanged(object? sender, EventArgs e) => UpdateStatus();
@@ -227,11 +254,12 @@ public partial class MainWindow : Window
     /// <summary>Updates window identity and concise document information.</summary>
     private void UpdateStatus()
     {
-        Title = (document.IsDirty ? "*" : "") + (document.Path is null ? T("Untitled") : Path.GetFileName(document.Path)) + " - MarkdownPreview";
+        Title = (document.IsDirty ? "*" : "") + (document.Path is null ? T("Untitled") : Path.GetFileName(document.Path)) + " - NeoPad";
         StatusText.Text = $"{T("Line")} {Editor.TextArea.Caret.Line}   {T("Column")} {Editor.TextArea.Caret.Column}    |    {document.Format}    |    {document.Encoding.WebName}    |    {document.LineEnding}    |    {T("Errors")}: {markers.Diagnostics.Count}";
         StatusText.ToolTip = markers.Diagnostics.Count == 0 ? T("DiagnosticHint") : string.Join("\n", markers.Diagnostics.Take(30).Select(d => $"{d.Line}:{d.Column} {d.Message}"));
         ZoomText.Text = $"{zoom:P0}";
         ZoomText.ToolTip = T("ZoomHint");
+        if (limitedEditing) { StatusText.Text += "    |    " + T("LargeMode"); StatusText.ToolTip = T("LargeModeHint"); }
     }
 
     /// <summary>Debounces parser work and invalidates previous results immediately.</summary>
@@ -244,18 +272,23 @@ public partial class MainWindow : Window
         var current = revision; var text = document.Text; var format = document.Format; var dark = Dark;
         try
         {
+            if (limitedEditing)
+            {
+                markers.Diagnostics = []; Editor.TextArea.TextView.Redraw(); UpdateStatus(); return;
+            }
             await parserGate.WaitAsync();
             (IReadOnlyList<Diagnostic> Errors, string Body) result;
             try
             {
                 if (closing || current != revision) return;
-                result = await Task.Run(() => (Rendering.Validate(text, format), format == FileFormat.Markdown ? Rendering.MarkdownBody(text, dark) : ""));
+                var showPreview = PreviewVisible;
+                result = await Task.Run(() => (Rendering.Validate(text, format), showPreview ? Rendering.MarkdownBody(text, dark) : ""));
             }
             finally { parserGate.Release(); }
             if (closing || current != revision) return;
             markers.Diagnostics = result.Errors; Editor.TextArea.TextView.Redraw(); UpdateStatus();
             TracePreview($"Rendered revision {current}, HTML length {result.Body.Length}, ready={webReady}.");
-            if (format == FileFormat.Markdown && webReady) NavigatePreview(result.Body);
+            if (PreviewVisible && webReady) NavigatePreview(result.Body);
         }
         catch (Exception error) { if (!closing && current == revision) ShowPreviewFailure(error.Message); }
     }
@@ -270,18 +303,26 @@ public partial class MainWindow : Window
     /// <summary>Switches the split view according to the selected format.</summary>
     private async void UpdateFormatVisibility()
     {
-        var markdown = document.Format == FileFormat.Markdown;
-        PreviewHost.Visibility = Divider.Visibility = markdown ? Visibility.Visible : Visibility.Collapsed;
-        PreviewColumn.Width = markdown ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
-        DividerColumn.Width = new GridLength(markdown ? 5 : 0);
-        if (markdown) Preview.Visibility = Visibility.Visible;
-        if (IsLoaded && markdown) await EnsurePreview();
+        var visible = PreviewVisible;
+        OpenPreviewButton.Visibility = document.Format == FileFormat.Markdown && previewHidden && !limitedEditing ? Visibility.Visible : Visibility.Collapsed;
+        PreviewHost.Visibility = Divider.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+        if (visible != previewLayoutVisible)
+        {
+            // Reset both star columns together only when visibility changes, never during font/theme updates.
+            PreviewColumn.MinWidth = visible ? 280 : 0;
+            EditorColumn.Width = new GridLength(visible ? 1 - previewShare : 1, GridUnitType.Star);
+            PreviewColumn.Width = visible ? new GridLength(previewShare, GridUnitType.Star) : new GridLength(0);
+            DividerColumn.Width = new GridLength(visible ? 5 : 0);
+            previewLayoutVisible = visible;
+        }
+        if (visible) Preview.Visibility = Visibility.Visible;
+        if (IsLoaded && visible) await EnsurePreview();
     }
 
     /// <summary>Initializes an isolated browser profile and disables active document capabilities.</summary>
     private async Task EnsurePreview()
     {
-        if (webReady || webStarting || closing || document.Format != FileFormat.Markdown) return;
+        if (webReady || webStarting || closing || !PreviewVisible) return;
         webStarting = true;
         Preview.Visibility = Visibility.Visible;
         Preview.DefaultBackgroundColor = Dark ? System.Drawing.Color.FromArgb(30, 32, 38) : System.Drawing.Color.FromArgb(250, 251, 253);
@@ -290,7 +331,7 @@ public partial class MainWindow : Window
         PreviewMessage.Text = T("Loading");
         try
         {
-            var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MarkdownPreview", "WebView2");
+            var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), ProductInfo.Name, "WebView2");
             var environment = await CoreWebView2Environment.CreateAsync(null, folder);
             if (closing) return;
             await Preview.EnsureCoreWebView2Async(environment);
@@ -317,10 +358,10 @@ public partial class MainWindow : Window
     private void NavigatePreview(string body)
     {
         Preview.Visibility = Visibility.Visible;
-        if (mappedFolder is not null) Preview.CoreWebView2.ClearVirtualHostNameToFolderMapping("preview.markdownpreview.invalid");
+        if (mappedFolder is not null) Preview.CoreWebView2.ClearVirtualHostNameToFolderMapping("preview.neopad.invalid");
         mappedFolder = document.Path is null ? null : Path.GetDirectoryName(document.Path);
-        if (mappedFolder is not null) Preview.CoreWebView2.SetVirtualHostNameToFolderMapping("preview.markdownpreview.invalid", mappedFolder, CoreWebView2HostResourceAccessKind.DenyCors);
-        var html = Rendering.Preview(body, Dark).Replace("<head>", "<head><base href='https://preview.markdownpreview.invalid/'>", StringComparison.Ordinal);
+        if (mappedFolder is not null) Preview.CoreWebView2.SetVirtualHostNameToFolderMapping("preview.neopad.invalid", mappedFolder, CoreWebView2HostResourceAccessKind.DenyCors);
+        var html = Rendering.Preview(body, Palette).Replace("<head>", "<head><base href='https://preview.neopad.invalid/'>", StringComparison.Ordinal);
         previewNavigationPending = true;
         TracePreview($"Navigating generated HTML, length {html.Length}.");
         Preview.NavigateToString(html);
@@ -406,7 +447,7 @@ public partial class MainWindow : Window
             activePreviewNavigation = e.NavigationId;
             return;
         }
-        if (e.Uri == "about:blank" || e.Uri.StartsWith("about:blank#", StringComparison.Ordinal) || e.Uri.StartsWith("https://preview.markdownpreview.invalid/#", StringComparison.Ordinal))
+        if (e.Uri == "about:blank" || e.Uri.StartsWith("about:blank#", StringComparison.Ordinal) || e.Uri.StartsWith("https://preview.neopad.invalid/#", StringComparison.Ordinal))
         {
             if (previewNavigationPending) activePreviewNavigation = e.NavigationId;
             return;
@@ -426,7 +467,7 @@ public partial class MainWindow : Window
     /// <summary>Opens ordinary web and mail links using the user's default applications.</summary>
     private void OpenExternal(string value)
     {
-        if (Uri.TryCreate(value, UriKind.Absolute, out var uri) && uri.Scheme is "https" or "http" or "mailto" && uri.Host != "preview.markdownpreview.invalid")
+        if (Uri.TryCreate(value, UriKind.Absolute, out var uri) && uri.Scheme is "https" or "http" or "mailto" && uri.Host != "preview.neopad.invalid")
             Execute(() => Process.Start(new ProcessStartInfo(value) { UseShellExecute = true }));
     }
 
@@ -437,6 +478,7 @@ public partial class MainWindow : Window
         Action? action = control ? e.Key switch
         {
             Key.N => shift ? NewWindow : NewDocument, Key.O => OpenDialog, Key.S => () => Save(shift),
+            Key.F when shift => FormatDocument,
             Key.F or Key.H => ShowSearch, Key.G => GoToLine,
             Key.D0 or Key.NumPad0 => () => SetZoom(1),
             Key.OemPlus or Key.Add => () => SetZoom(zoom + 0.1),
@@ -468,7 +510,7 @@ public partial class MainWindow : Window
         var index = backwards ? start < 0 || text.Length == 0 ? -1 : text.LastIndexOf(query, Math.Min(start, text.Length - 1), StringComparison.OrdinalIgnoreCase)
             : text.IndexOf(query, Math.Min(start, text.Length), StringComparison.OrdinalIgnoreCase);
         if (index < 0) index = backwards ? text.LastIndexOf(query, StringComparison.OrdinalIgnoreCase) : text.IndexOf(query, StringComparison.OrdinalIgnoreCase);
-        if (index < 0) { MessageBox.Show(this, T("NotFound")); return; }
+        if (index < 0) { Inform(T("NotFound")); return; }
         Editor.Select(index, query.Length); Editor.ScrollToLine(Editor.Document.GetLineByOffset(index).LineNumber); Editor.Focus();
     }
 
@@ -500,7 +542,7 @@ public partial class MainWindow : Window
         WindowTheme.PrepareDialog(dialog, this, Dark);
         var panel = new StackPanel(); panel.Children.Add(input);
         var button = new Button { Content = "OK", IsDefault = true, Margin = new Thickness(12), Padding = new Thickness(12, 4, 12, 4) };
-        button.Click += (_, _) => { if (int.TryParse(input.Text, out var line) && line > 0 && line <= Editor.Document.LineCount) { Editor.CaretOffset = Editor.Document.GetLineByNumber(line).Offset; Editor.ScrollToLine(line); dialog.DialogResult = true; } else MessageBox.Show(dialog, T("InvalidLine")); };
+        button.Click += (_, _) => { if (int.TryParse(input.Text, out var line) && line > 0 && line <= Editor.Document.LineCount) { Editor.CaretOffset = Editor.Document.GetLineByNumber(line).Offset; Editor.ScrollToLine(line); dialog.DialogResult = true; } else Inform(T("InvalidLine")); };
         panel.Children.Add(button); dialog.Content = panel; dialog.ShowDialog(); Editor.Focus();
     }
 
@@ -513,7 +555,7 @@ public partial class MainWindow : Window
         var dialog = new Window { Owner = this, Title = T("Settings").Replace("_", ""), Width = 400, SizeToContent = SizeToContent.Height, WindowStartupLocation = WindowStartupLocation.CenterOwner, ResizeMode = ResizeMode.NoResize, Background = Background, Foreground = Foreground };
         WindowTheme.PrepareDialog(dialog, this, Dark);
         var panel = new StackPanel { Margin = new Thickness(20) };
-        var theme = new ComboBox { ItemsSource = new[] { T("Dark"), T("Light"), T("System") }, SelectedIndex = preferences.Theme == "Light" ? 1 : preferences.Theme == "System" ? 2 : 0 };
+        var theme = new ComboBox { ItemsSource = AppThemes.Names.Select(T).ToArray(), SelectedIndex = Math.Max(0, AppThemes.Names.ToList().IndexOf(preferences.Theme)) };
         var font = new ComboBox { ItemsSource = Fonts.SystemFontFamilies.Select(f => f.Source).OrderBy(f => f).ToArray(), SelectedItem = preferences.Font };
         var size = new TextBox { Text = preferences.FontSize.ToString(System.Globalization.CultureInfo.InvariantCulture) };
         var language = new ComboBox { ItemsSource = new[] { "Polski", "English" }, SelectedIndex = preferences.Language == "pl" ? 0 : 1 };
@@ -522,18 +564,83 @@ public partial class MainWindow : Window
         var apply = new Button { Content = "OK", IsDefault = true, Margin = new Thickness(0, 20, 0, 0), Padding = new Thickness(12, 5, 12, 5) };
         apply.Click += (_, _) => Execute(() =>
         {
-            preferences.Theme = new[] { "Dark", "Light", "System" }[theme.SelectedIndex]; preferences.Font = font.SelectedItem as string ?? "Consolas";
+            preferences.Theme = AppThemes.Names[theme.SelectedIndex]; preferences.Font = font.SelectedItem as string ?? "Consolas";
             if (double.TryParse(size.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var value) && double.IsFinite(value)) preferences.FontSize = Math.Clamp(value, 8, 72);
             preferences.Language = language.SelectedIndex == 0 ? "pl" : "en"; preferences.Save(); ApplyPreferences(); UpdateStatus(); dialog.DialogResult = true;
         });
         panel.Children.Add(apply); dialog.Content = panel; dialog.ShowDialog();
     }
 
+    /// <summary>Disables automatic analysis when document size or unusually long lines would make editing expensive.</summary>
+    private void UpdateEditingMode(bool force = false)
+    {
+        var next = Editor.Document.TextLength > 1_000_000 || Editor.Document.LineCount > 10_000 || Editor.Document.Lines.Any(line => line.Length > 20_000);
+        if (next != limitedEditing || force)
+        {
+            limitedEditing = next;
+            Editor.SyntaxHighlighting = next ? null : EditorHighlighting.Create(document.Format, Dark);
+            if (next) markers.Diagnostics = [];
+        }
+    }
+
+    /// <summary>Remembers the user's split without changing either column during a theme or font update.</summary>
+    private void OnDividerDragCompleted(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e)
+    {
+        if (!PreviewVisible) return;
+        var total = EditorColumn.ActualWidth + PreviewColumn.ActualWidth;
+        if (total > 0) previewShare = Math.Clamp(PreviewColumn.ActualWidth / total, 0.1, 0.9);
+    }
+
+    /// <summary>Closes only the preview pane while retaining the selected file format.</summary>
+    private void OnClosePreview(object sender, RoutedEventArgs e)
+    {
+        previewHidden = true; UpdateFormatVisibility(); ScheduleRefresh();
+    }
+
+    /// <summary>Restores preview using the saved split when the current format supports it.</summary>
+    private void OnOpenPreview(object sender, RoutedEventArgs e)
+    {
+        previewHidden = false; UpdateFormatVisibility(); ScheduleRefresh();
+    }
+
+    /// <summary>Formats supported valid documents as one undoable change without writing to disk.</summary>
+    private void FormatDocument()
+    {
+        if (!CanFormat) return;
+        try
+        {
+            var formatted = FileFormatter.Format(Editor.Text, document.Format);
+            if (formatted == Editor.Text) return;
+            var caret = Editor.CaretOffset;
+            Editor.Document.Replace(0, Editor.Document.TextLength, formatted);
+            Editor.CaretOffset = Math.Min(caret, Editor.Document.TextLength);
+        }
+        catch (Exception error) when (error is JsonException or System.Xml.XmlException)
+        { Inform(T("FormattingError") + "\n\n" + error.Message, T("Error")); }
+    }
+
+    /// <summary>Shows a themed question, including explicit Save/Discard/Cancel labels for dirty documents.</summary>
+    private MessageBoxResult Ask(string message, bool saveChoices = false)
+    {
+        var actions = saveChoices
+            ? new[] { new DialogAction(T("Save").Replace("_", ""), MessageBoxResult.Yes, true), new DialogAction(T("Discard"), MessageBoxResult.No), new DialogAction(T("Cancel"), MessageBoxResult.Cancel, IsCancel: true) }
+            : new[] { new DialogAction(T("Yes"), MessageBoxResult.Yes, true), new DialogAction(T("No"), MessageBoxResult.No, IsCancel: true) };
+        var dialog = new AppDialog(this, Dark, ProductInfo.Name, message, actions);
+        dialog.ShowDialog(); return dialog.Choice;
+    }
+
+    /// <summary>Shows an informational or error message using the current application theme.</summary>
+    private void Inform(string message, string? title = null)
+    {
+        new AppDialog(this, Dark, title ?? ProductInfo.Name, message,
+            new DialogAction("OK", MessageBoxResult.OK, true, true)).ShowDialog();
+    }
+
     /// <summary>Exercises actual WPF controls and WebView rendering on a Windows CI desktop.</summary>
     internal async void RunSmokeTest(string? reportPath = null)
     {
         reportPath ??= Path.Combine(AppContext.BaseDirectory, "smoke-result.txt");
-        var directory = Path.Combine(Path.GetTempPath(), "MarkdownPreviewSmoke", Guid.NewGuid().ToString("N"));
+        var directory = Path.Combine(Path.GetTempPath(), "NeoPadSmoke", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(directory);
         try
         {
@@ -571,6 +678,7 @@ public partial class MainWindow : Window
             SetZoom(1.2);
             if (Math.Abs(Editor.FontSize - preferences.FontSize * 1.2) > 0.01) throw new InvalidOperationException("Editor zoom failed.");
             SetZoom(1);
+            await VerifyEditingFeaturesAsync(directory);
             foreach (var theme in new[] { "Light", "Dark" })
             {
                 preferences.Theme = theme; ApplyPreferences();
@@ -585,7 +693,7 @@ public partial class MainWindow : Window
             preferences.Language = "en"; ApplyPreferences();
             if ((string)((MenuItem)MainMenu.Items[0]).Header != "_File") throw new InvalidOperationException("English menu was not applied.");
             document.Save(document.Path!); Editor.Text = document.Text;
-            File.WriteAllText(reportPath, "PASSED: WPF editor, save state, search/replace/undo, initial and reopened Markdown/HTML preview, JSON/Markdown transitions, native Ctrl+wheel without scrolling in both panes, normal wheel scrolling, light/dark menu popup colors and localization.");
+            File.WriteAllText(reportPath, "PASSED: document editing, Markdown/HTML rendering, native zoom without scrolling, out-of-window splitter drags and pane minimums, font changes without pane shrinkage, preview hide/reopen, all palettes, themed save choices and scrollbars, undoable JSON formatting, 61 MB file rejection, large-file analysis safeguards and localization.");
             Close(); Application.Current.Shutdown(0);
         }
         catch (Exception error)
