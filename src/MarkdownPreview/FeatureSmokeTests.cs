@@ -15,8 +15,9 @@ public partial class MainWindow
     {
         document.Save(document.Path!);
         var markdownPath = document.Path!;
+        var initialPreviewWidth = PreviewColumn.ActualWidth;
         await WindowsInputProbe.DragOutsideAsync(Divider, true);
-        if (PreviewColumn.ActualWidth < 279 || EditorColumn.ActualWidth < 259)
+        if (PreviewColumn.ActualWidth < 279 || EditorColumn.ActualWidth < 259 || PreviewColumn.ActualWidth > initialPreviewWidth - 20)
             throw new InvalidOperationException("Dragging beyond the right window edge violated pane minimums.");
         await WindowsInputProbe.DragOutsideAsync(Divider, false);
         if (PreviewColumn.ActualWidth < 279 || EditorColumn.ActualWidth < 259)
@@ -86,6 +87,12 @@ public partial class MainWindow
             throw new InvalidOperationException("The editor scrollbar remained white in a dark theme.");
         OpenPath(markdownPath);
         await VerifyPreviewHeadingAsync("Wheel heading");
+        Editor.Select(0, 0);
+        var original = Editor.Text;
+        await WindowsInputProbe.TypePolishSAsync(Editor.TextArea);
+        if (Editor.Text != "ś" + original) throw new InvalidOperationException("AltGr+S did not type ś; a shortcut may have intercepted text input.");
+        Editor.Undo();
+        if (Editor.Text != original) throw new InvalidOperationException("Polish text input did not remain an ordinary undoable edit.");
     }
 
     /// <summary>Waits for actual browser CSS to reflect a newly selected palette.</summary>
