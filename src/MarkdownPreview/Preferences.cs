@@ -19,7 +19,12 @@ public sealed class Preferences
         try
         {
             var path = SettingsPath;
-            if (!File.Exists(path)) path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MarkdownPreview", "settings.json");
+            if (!File.Exists(path))
+            {
+                var root = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                path = new[] { "NeoPad", "MarkdownPreview" }.Select(name => Path.Combine(root, name, "settings.json"))
+                    .FirstOrDefault(File.Exists) ?? path;
+            }
             return JsonSerializer.Deserialize<Preferences>(File.ReadAllText(path)) ?? new();
         }
         catch (Exception error) when (error is IOException or JsonException or UnauthorizedAccessException) { return new(); }
