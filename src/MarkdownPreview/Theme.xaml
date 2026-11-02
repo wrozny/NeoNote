@@ -100,4 +100,35 @@
     </ControlTemplate></Setter.Value></Setter>
   </Style>
   <Style TargetType="ToolTip"><Setter Property="Background" Value="{DynamicResource Panel}"/><Setter Property="Foreground" Value="{DynamicResource Text}"/><Setter Property="BorderBrush" Value="{DynamicResource Stroke}"/></Style>
+  <Style x:Key="ScrollPageButton" TargetType="RepeatButton">
+    <Setter Property="Focusable" Value="False"/>
+    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="RepeatButton"><Border Background="Transparent"/></ControlTemplate></Setter.Value></Setter>
+  </Style>
+  <Style x:Key="ScrollThumb" TargetType="Thumb">
+    <Setter Property="Background" Value="{DynamicResource Muted}"/>
+    <Setter Property="MinHeight" Value="24"/><Setter Property="MinWidth" Value="6"/>
+    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Thumb">
+      <Border x:Name="Handle" Background="{TemplateBinding Background}" CornerRadius="4" Margin="3" Opacity="0.65"/>
+      <ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Handle" Property="Opacity" Value="1"/></Trigger><Trigger Property="IsDragging" Value="True"><Setter TargetName="Handle" Property="Background" Value="{DynamicResource Accent}"/></Trigger></ControlTemplate.Triggers>
+    </ControlTemplate></Setter.Value></Setter>
+  </Style>
+  <Style TargetType="ScrollBar">
+    <Setter Property="Background" Value="{DynamicResource Panel}"/><Setter Property="Width" Value="13"/><Setter Property="Focusable" Value="False"/>
+    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ScrollBar">
+      <Border Background="{TemplateBinding Background}">
+        <Track x:Name="PART_Track" Orientation="{TemplateBinding Orientation}" IsDirectionReversed="True" Minimum="{TemplateBinding Minimum}" Maximum="{TemplateBinding Maximum}" Value="{TemplateBinding Value}" ViewportSize="{TemplateBinding ViewportSize}">
+          <Track.DecreaseRepeatButton><RepeatButton x:Name="Decrease" Style="{StaticResource ScrollPageButton}" Command="ScrollBar.PageUpCommand"/></Track.DecreaseRepeatButton>
+          <Track.Thumb><Thumb x:Name="Thumb" Style="{StaticResource ScrollThumb}"/></Track.Thumb>
+          <Track.IncreaseRepeatButton><RepeatButton x:Name="Increase" Style="{StaticResource ScrollPageButton}" Command="ScrollBar.PageDownCommand"/></Track.IncreaseRepeatButton>
+        </Track>
+      </Border>
+      <ControlTemplate.Triggers><Trigger Property="Orientation" Value="Horizontal">
+        <Setter TargetName="PART_Track" Property="IsDirectionReversed" Value="False"/>
+        <Setter TargetName="Decrease" Property="Command" Value="ScrollBar.PageLeftCommand"/>
+        <Setter TargetName="Increase" Property="Command" Value="ScrollBar.PageRightCommand"/>
+        <Setter TargetName="Thumb" Property="MinWidth" Value="24"/><Setter TargetName="Thumb" Property="MinHeight" Value="6"/>
+      </Trigger></ControlTemplate.Triggers>
+    </ControlTemplate></Setter.Value></Setter>
+    <Style.Triggers><Trigger Property="Orientation" Value="Horizontal"><Setter Property="Height" Value="13"/><Setter Property="Width" Value="Auto"/></Trigger></Style.Triggers>
+  </Style>
 </ResourceDictionary>
