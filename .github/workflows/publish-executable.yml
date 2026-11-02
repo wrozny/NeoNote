@@ -9,7 +9,7 @@ on:
       tag:
         description: Existing version tag to publish
         required: true
-        default: v0.1.1
+        default: v0.1.2
 
 permissions:
   contents: write
@@ -19,16 +19,21 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  verify-windows:
+    uses: ./.github/workflows/windows-ui-check.yml
+    with:
+      ref: ${{ inputs.tag || 'v0.1.2' }}
   publish:
+    needs: verify-windows
     runs-on: ubuntu-latest
     env:
-      RELEASE_TAG: ${{ inputs.tag || 'v0.1.1' }}
+      RELEASE_TAG: ${{ inputs.tag || 'v0.1.2' }}
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag || 'v0.1.1' }}
+          ref: ${{ inputs.tag || 'v0.1.2' }}
           fetch-depth: 0
       - uses: actions/setup-dotnet@v4
         with:
@@ -55,7 +60,7 @@ jobs:
           cat > /tmp/release-notes.md <<'NOTES'
           Download the attached **MarkdownPreview-*-win-x64-portable.exe** to run the application on Windows 10 22H2 x64 or newer. This is a ready-to-run application, not source code. It includes .NET and extracts its bundled files on first launch. Microsoft Edge WebView2 Runtime is required for Markdown preview.
 
-          This preview release includes Ctrl+wheel zoom, native dark title-bar styling, themed menu and settings controls, and corrected WebView2 initialization. Core tests and Windows cross-compilation are checked before publication. Native Windows UI acceptance remains a separate check; this preview does not claim that Windows 10 acceptance has completed.
+          This preview release corrects Markdown preview hosting and prevents Ctrl+wheel from scrolling either pane. The Windows executable must pass an actual WPF/WebView2 test, including rendered Markdown/HTML, reopening files and native Ctrl+wheel input, before publication. Browser and composed-window screenshots are captured for review. Full Windows 10 acceptance remains separate from the hosted Windows runner check.
 
           GitHub adds source-code archives automatically; they are separate from the executable asset. SHA256SUMS.txt contains the executable checksum.
           NOTES
