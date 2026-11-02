@@ -42,7 +42,7 @@ The Format menu's **Format document** command (Ctrl+Shift+F) supports JSON and X
 
 Themes include Dark, Midnight, Graphite, Forest, Warm, Light and System. Named palettes apply to editor controls, scrollbars, Markdown preview and save/discard/cancel prompts. Existing NeoPad preferences are read automatically if no NeoNote settings exist yet, with a MarkdownPreview fallback; new settings are stored under `%LOCALAPPDATA%\NeoNote`.
 
-AltGr combinations are reserved for text input, including Polish `ś` with AltGr+S; they never trigger application Ctrl shortcuts. The minimalist turquoise N with an offset violet edge in `src/MarkdownPreview/Assets` is embedded as a multiresolution Windows icon in the executable, window and installer.
+AltGr combinations are reserved for text input, including Polish `ś` with AltGr+S; they never trigger application Ctrl shortcuts. The graphite notebook artwork in `src/MarkdownPreview/Assets` is embedded as a transparent multiresolution Windows icon in the executable, window and installer. Windows tests extract both shell icon sizes from the built EXE and check alpha transparency, as well as the window icon. Dark-theme hyperlinks use a dedicated light-blue color in the editor and preview, including visited links.
 
 Files above **20 MiB** are rejected before their text is allocated; the current document stays open. Accepted documents above one million characters, 10,000 lines or 20,000 characters on a line use limited mode with automatic highlighting, validation and preview disabled. Explicit JSON/XML formatting remains available up to one million characters, which can make a minified file readable and restore normal editing mode.
 
