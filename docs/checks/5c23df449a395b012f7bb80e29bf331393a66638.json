@@ -1,7 +1,7 @@
 {
-  "report": "PASSED: document editing, Markdown/HTML rendering, native zoom without scrolling, out-of-window splitter drags and pane minimums, font changes without pane shrinkage, preview hide/reopen, all palettes, themed save choices and scrollbars, undoable JSON formatting, 61 MB file rejection, large-file analysis safeguards, Polish AltGr+S input and localization.",
-  "workflow": "https://github.com/wrozny/MarkdownPreview/actions/runs/41515330489",
   "build": "success",
-  "source_commit": "5c23df449a395b012f7bb80e29bf331393a66638",
-  "smoke": "success"
+  "report": "PASSED: document editing, Markdown/HTML rendering, native zoom without scrolling, out-of-window splitter drags and pane minimums, font changes without pane shrinkage, preview hide/reopen, all palettes, themed save choices and scrollbars, undoable JSON formatting, 61 MB file rejection, large-file analysis safeguards, Polish AltGr+S input and localization.",
+  "smoke": "success",
+  "workflow": "https://github.com/wrozny/MarkdownPreview/actions/runs/41515330552",
+  "source_commit": "5c23df449a395b012f7bb80e29bf331393a66638"
 }
