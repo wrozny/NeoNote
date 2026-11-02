@@ -1,6 +1,6 @@
 # Third-party components
 
-NeoPad uses these independently licensed components. Their licenses and notices remain applicable to redistributions.
+NeoNote uses these independently licensed components. Their licenses and notices remain applicable to redistributions.
 
 | Component | License | Source |
 | --- | --- | --- |
