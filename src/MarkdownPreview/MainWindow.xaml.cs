@@ -697,7 +697,7 @@ public partial class MainWindow : Window
             preferences.Language = "en"; ApplyPreferences();
             if ((string)((MenuItem)MainMenu.Items[0]).Header != "_File") throw new InvalidOperationException("English menu was not applied.");
             document.Save(document.Path!); Editor.Text = document.Text;
-            File.WriteAllText(reportPath, "PASSED: document editing, Markdown/HTML rendering, native zoom without scrolling, out-of-window splitter drags and pane minimums, font changes without pane shrinkage, preview hide/reopen, all palettes, themed save choices and scrollbars, undoable JSON formatting, 61 MB file rejection, large-file analysis safeguards and localization.");
+            File.WriteAllText(reportPath, "PASSED: document editing, Markdown/HTML rendering, native zoom without scrolling, out-of-window splitter drags and pane minimums, font changes without pane shrinkage, preview hide/reopen, all palettes, themed save choices and scrollbars, undoable JSON formatting, 61 MB file rejection, large-file analysis safeguards, Polish AltGr+S input and localization.");
             Close(); Application.Current.Shutdown(0);
         }
         catch (Exception error)
