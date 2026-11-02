@@ -1,0 +1,62 @@
+name: Windows build and release
+on:
+  push:
+    branches: [main, work]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Test document behavior and parsers
+        run: dotnet test tests/MarkdownPreview.Tests/MarkdownPreview.Tests.csproj -c Release --logger trx --results-directory artifacts/tests
+      - name: Build application
+        run: dotnet build src/MarkdownPreview/MarkdownPreview.csproj -c Release -warnaserror
+      - name: Package application
+        shell: pwsh
+        run: |
+          $version = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME.TrimStart('v') } else { '0.1.0' }
+          ./scripts/package.ps1 -Version $version
+      - name: Exercise WPF editor and WebView2
+        shell: pwsh
+        run: |
+          $process = Start-Process artifacts/win-x64/MarkdownPreview.exe -ArgumentList '--smoke-test' -PassThru
+          if (-not $process.WaitForExit(90000)) { $process.Kill(); throw 'UI smoke test timed out.' }
+          Get-Content artifacts/win-x64/smoke-result.txt
+          if ($process.ExitCode -ne 0) { throw "UI smoke test failed: $($process.ExitCode)" }
+      - name: Upload Windows packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: MarkdownPreview-windows
+          path: |
+            artifacts/*.zip
+            artifacts/*setup.exe
+            artifacts/SHA256SUMS.txt
+            artifacts/tests/*.trx
+            artifacts/win-x64/smoke-result.txt
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: windows
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: MarkdownPreview-windows
+          path: artifacts
+      - name: Publish prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release create "$GITHUB_REF_NAME" artifacts/*.zip artifacts/*setup.exe artifacts/SHA256SUMS.txt --title "MarkdownPreview $GITHUB_REF_NAME" --notes "Windows x64 preview. Includes a portable package and per-user installer. WebView2 Runtime is required. Native Windows 10 acceptance checks are listed in docs/WINDOWS-ACCEPTANCE.md." --prerelease
