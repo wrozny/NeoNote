@@ -543,6 +543,7 @@ public partial class MainWindow : Window
             while (!webReady && DateTime.UtcNow < limit) await Task.Delay(100);
             if (!webReady) throw new InvalidOperationException("WebView2 did not initialize: " + PreviewMessage.Text);
             await VerifyPreviewHeadingAsync("Smoke heading");
+            await CapturePreviewArtifactsAsync(reportPath);
             var htmlHeading = await Preview.CoreWebView2.ExecuteScriptAsync("document.querySelector('h2').textContent");
             if (JsonSerializer.Deserialize<string>(htmlHeading) != "HTML heading") throw new InvalidOperationException("Embedded HTML heading did not render.");
             document.Save(document.Path!);
@@ -626,5 +627,19 @@ public partial class MainWindow : Window
         await WindowsInputProbe.WheelAsync(Editor, -120, false);
         if (Editor.VerticalOffset <= offset) throw new InvalidOperationException("Normal editor wheel input did not scroll.");
         document.Save(document.Path!);
+    }
+
+    /// <summary>Captures both browser pixels and the composed WPF window for visual regression review.</summary>
+    private async Task CapturePreviewArtifactsAsync(string reportPath)
+    {
+        await using (var stream = File.Create(Path.ChangeExtension(reportPath, ".browser.png")))
+            await Preview.CoreWebView2.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png, stream);
+        await Task.Delay(200);
+        var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap((int)ActualWidth, (int)ActualHeight, 96, 96, PixelFormats.Pbgra32);
+        bitmap.Render(this);
+        var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+        encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
+        using var output = File.Create(Path.ChangeExtension(reportPath, ".window.png"));
+        encoder.Save(output);
     }
 }
