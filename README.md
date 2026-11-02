@@ -8,7 +8,7 @@ Target: Windows 10 22H2 x64 or newer. Install the Microsoft Edge WebView2 Evergr
 
 Download the `setup.exe` installer or the directly runnable `portable.exe` from the release assets. GitHub's automatically generated source archives are not application packages. The single portable EXE includes .NET and extracts its bundled files on first launch; the installed and extracted-folder variants avoid that extraction step.
 
-Open `MarkdownPreview.exe` or pass a filename as its first argument. The per-user installer registers a Start menu shortcut and an Explorer Open With entry without changing the default Markdown application. Ctrl+wheel and Ctrl+plus/minus zoom the editor and preview; Ctrl+0 resets to 100%.
+Open `MarkdownPreview.exe` or pass a filename as its first argument. The per-user installer registers a Start menu shortcut and an Explorer Open With entry without changing the default Markdown application. Ctrl+wheel and Ctrl+plus/minus zoom the editor and preview without scrolling their viewports; Ctrl+0 resets to 100%. Normal wheel input scrolls as usual.
 
 ## Development
 
@@ -31,6 +31,8 @@ Packaging additionally requires Inno Setup 6. Output: `artifacts/`, with a self-
 For testing on your own computer, see [local Windows testing](docs/LOCAL-TESTING.md). Each portable ZIP includes `diagnose-windows.ps1`.
 
 Linux can run core tests and cross-compile the Windows executable, but cannot run WPF. Complete [Windows acceptance checks](docs/WINDOWS-ACCEPTANCE.md) on the target OS before treating a preview as production-ready.
+
+The executable release workflow requires a Windows UI check of the single-file package before publishing. It exercises generated Markdown/HTML, reopening after JSON, and real Ctrl+wheel input. Controlled reports and sample-document screenshots are stored on the `release-receipts` branch for diagnosis. Hosting uses WebView2 composition so WPF can consume zoom gestures before forwarding them to the browser. The explicit Windows 10 SDK target includes its WinRT dependencies in published packages.
 
 ## Behavior
 
