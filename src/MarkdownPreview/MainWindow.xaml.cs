@@ -45,7 +45,7 @@ public partial class MainWindow : Window
         Activated += OnActivated;
         Drop += OnDrop;
         PreviewKeyDown += OnKeyDown;
-        Editor.PreviewMouseWheel += OnEditorMouseWheel;
+        PreviewMouseWheel += OnZoomMouseWheel;
         SourceInitialized += OnSourceInitialized;
         FindButton.Click += OnFind;
         ReplaceButton.Click += OnReplace;
@@ -303,9 +303,8 @@ public partial class MainWindow : Window
             Preview.CoreWebView2.DownloadStarting += OnDownload;
             Preview.CoreWebView2.NavigationCompleted += OnPreviewNavigationCompleted;
             Preview.CoreWebView2.ProcessFailed += OnPreviewProcessFailed;
-            Preview.CoreWebView2.Settings.IsZoomControlEnabled = true;
-            Preview.ZoomFactorChanged += OnPreviewZoomChanged;
-            webReady = true; Preview.ZoomFactor = zoom; ScheduleRefresh();
+            Preview.CoreWebView2.Settings.IsZoomControlEnabled = false;
+            webReady = true; ScheduleRefresh();
         }
         catch (Exception error) { if (!closing) ShowPreviewFailure(T("PreviewUnavailable") + "\n\n" + error.Message); }
         finally { webStarting = false; }
@@ -327,21 +326,25 @@ public partial class MainWindow : Window
     private void ShowPreviewFailure(string message)
     {
         PreviewMessage.Text = message;
-        // WebView2 is a native child window: hide it while displaying WPF error controls.
-        Preview.Visibility = Visibility.Hidden;
+        // Composition hosting keeps this error overlay visible above browser content.
         PreviewNotice.Visibility = Visibility.Visible;
         RetryPreviewButton.Visibility = Visibility.Visible;
     }
 
     /// <summary>Removes the startup notice only after an actual successful page navigation.</summary>
-    private void OnPreviewNavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
+    private async void OnPreviewNavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
     {
         if (closing || !previewNavigationPending || e.NavigationId != activePreviewNavigation) return;
         if (e.WebErrorStatus == CoreWebView2WebErrorStatus.OperationCanceled) return;
-        previewNavigationPending = false;
-        if (!e.IsSuccess) { ShowPreviewFailure(T("PreviewFailed") + " " + e.WebErrorStatus); return; }
-        PreviewNotice.Visibility = Visibility.Collapsed;
-        Preview.Visibility = Visibility.Visible;
+        if (!e.IsSuccess) { previewNavigationPending = false; ShowPreviewFailure(T("PreviewFailed") + " " + e.WebErrorStatus); return; }
+        try
+        {
+            await Preview.CoreWebView2.ExecuteScriptAsync(PreviewScripts.SetZoom(zoom));
+            if (closing || e.NavigationId != activePreviewNavigation) return;
+            previewNavigationPending = false;
+            PreviewNotice.Visibility = Visibility.Collapsed;
+        }
+        catch (Exception error) { if (!closing) ShowPreviewFailure(error.Message); }
     }
 
     /// <summary>Reports renderer crashes and permits a reload when the browser process survives.</summary>
@@ -362,26 +365,30 @@ public partial class MainWindow : Window
     private void OnSourceInitialized(object? sender, EventArgs e) => WindowTheme.ApplyTitleBar(this, Dark);
 
     /// <summary>Zooms editor text with Ctrl+wheel while leaving normal scrolling untouched.</summary>
-    private void OnEditorMouseWheel(object sender, MouseWheelEventArgs e)
+    private void OnZoomMouseWheel(object sender, MouseWheelEventArgs e)
     {
         if (!Keyboard.Modifiers.HasFlag(ModifierKeys.Control)) return;
+        if (!Editor.IsMouseOver && !PreviewHost.IsMouseOver) return;
         e.Handled = true;
         SetZoom(zoom + Math.Sign(e.Delta) * 0.1);
     }
 
     /// <summary>Updates the editor and preview scale without changing the configured base font size.</summary>
-    private void SetZoom(double factor)
+    private async void SetZoom(double factor)
     {
+        var vertical = Editor.VerticalOffset;
+        var horizontal = Editor.HorizontalOffset;
         zoom = Math.Clamp(Math.Round(factor, 2), 0.5, 3);
         Editor.FontSize = Math.Clamp(preferences.FontSize, 8, 72) * zoom;
-        if (webReady) Preview.ZoomFactor = zoom;
+        Editor.UpdateLayout();
+        Editor.ScrollToVerticalOffset(vertical);
+        Editor.ScrollToHorizontalOffset(horizontal);
         UpdateStatus();
-    }
-
-    /// <summary>Synchronizes browser Ctrl+wheel zoom with the editor and zoom indicator.</summary>
-    private void OnPreviewZoomChanged(object? sender, EventArgs e)
-    {
-        if (webReady && Math.Abs(Preview.ZoomFactor - zoom) > 0.01) SetZoom(Preview.ZoomFactor);
+        try
+        {
+            if (webReady && !previewNavigationPending) await Preview.CoreWebView2.ExecuteScriptAsync(PreviewScripts.SetZoom(zoom));
+        }
+        catch (Exception error) { if (!closing) ShowPreviewFailure(error.Message); }
     }
 
     /// <summary>Allows only the generated page inside the preview and sends external links to Windows.</summary>
@@ -519,6 +526,9 @@ public partial class MainWindow : Window
         try
         {
             if (!IsLoaded) await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            Width = Math.Min(1000, SystemParameters.WorkArea.Width - 40);
+            Height = Math.Min(700, SystemParameters.WorkArea.Height - 40);
+            Left = 20; Top = 20; Activate();
             Editor.Text = "# Smoke heading\n\n**Rendered**\n\n<h2>HTML heading</h2>";
             if (!Title.StartsWith("*")) throw new InvalidOperationException("Dirty title was not updated.");
             document.Save(Path.Combine(directory, "smoke.md")); UpdateStatus();
@@ -544,6 +554,7 @@ public partial class MainWindow : Window
             OpenPath(markdownPath);
             await VerifyPreviewHeadingAsync("Smoke heading");
             if (PreviewHost.Visibility != Visibility.Visible) throw new InvalidOperationException("Reopening Markdown did not restore preview.");
+            await VerifyWheelGesturesAsync();
             SetZoom(1.2);
             if (Math.Abs(Editor.FontSize - preferences.FontSize * 1.2) > 0.01) throw new InvalidOperationException("Editor zoom failed.");
             SetZoom(1);
@@ -561,7 +572,7 @@ public partial class MainWindow : Window
             preferences.Language = "en"; ApplyPreferences();
             if ((string)((MenuItem)MainMenu.Items[0]).Header != "_File") throw new InvalidOperationException("English menu was not applied.");
             document.Save(document.Path!); Editor.Text = document.Text;
-            File.WriteAllText(reportPath, "PASSED: WPF editor, save state, search/replace/undo, initial and reopened Markdown/HTML preview, JSON/Markdown transitions, zoom, light/dark menu popup colors and localization.");
+            File.WriteAllText(reportPath, "PASSED: WPF editor, save state, search/replace/undo, initial and reopened Markdown/HTML preview, JSON/Markdown transitions, native Ctrl+wheel without scrolling in both panes, normal wheel scrolling, light/dark menu popup colors and localization.");
             Close(); Application.Current.Shutdown(0);
         }
         catch (Exception error)
@@ -585,6 +596,35 @@ public partial class MainWindow : Window
             }
             await Task.Delay(100);
         }
-        throw new InvalidOperationException("Preview did not render the expected heading: " + PreviewMessage.Text);
+        var state = webReady ? await Preview.CoreWebView2.ExecuteScriptAsync("JSON.stringify({url:location.href,body:document.body?.innerText.slice(0,150),width:innerWidth,height:innerHeight})") : "not initialized";
+        throw new InvalidOperationException($"Preview did not render the expected heading: {PreviewMessage.Text}. Pending={previewNavigationPending}; notice={PreviewNotice.Visibility}; pane={Preview.ActualWidth}x{Preview.ActualHeight}; browser={state}");
+    }
+
+    /// <summary>Verifies real Ctrl+wheel suppresses scrolling and ordinary wheel input still scrolls both panes.</summary>
+    private async Task VerifyWheelGesturesAsync()
+    {
+        Editor.Text = "# Smoke heading\n\n" + string.Join("\n\n", Enumerable.Range(1, 100).Select(i => $"Paragraph {i}: sample document content."));
+        await VerifyPreviewHeadingAsync("Smoke heading");
+        Editor.ScrollToVerticalOffset(200);
+        await Preview.CoreWebView2.ExecuteScriptAsync("window.scrollTo(0, 200)");
+        await Task.Delay(200);
+        var offset = Editor.VerticalOffset;
+        var scale = zoom;
+        await WindowsInputProbe.WheelAsync(Editor, 120, true);
+        if (zoom <= scale || Math.Abs(Editor.VerticalOffset - offset) > 1)
+            throw new InvalidOperationException($"Editor Ctrl+wheel scrolled or failed to zoom: {offset} -> {Editor.VerticalOffset}, scale {scale} -> {zoom}.");
+        var y = double.Parse(await Preview.CoreWebView2.ExecuteScriptAsync("window.scrollY"), System.Globalization.CultureInfo.InvariantCulture);
+        scale = zoom;
+        await WindowsInputProbe.WheelAsync(Preview, 120, true);
+        var after = double.Parse(await Preview.CoreWebView2.ExecuteScriptAsync("window.scrollY"), System.Globalization.CultureInfo.InvariantCulture);
+        if (zoom <= scale || Math.Abs(y - after) > 1)
+            throw new InvalidOperationException($"Preview Ctrl+wheel scrolled or failed to zoom: {y} -> {after}, scale {scale} -> {zoom}.");
+        await WindowsInputProbe.WheelAsync(Preview, -120, false);
+        after = double.Parse(await Preview.CoreWebView2.ExecuteScriptAsync("window.scrollY"), System.Globalization.CultureInfo.InvariantCulture);
+        if (after <= y) throw new InvalidOperationException("Normal preview wheel input did not scroll.");
+        offset = Editor.VerticalOffset;
+        await WindowsInputProbe.WheelAsync(Editor, -120, false);
+        if (Editor.VerticalOffset <= offset) throw new InvalidOperationException("Normal editor wheel input did not scroll.");
+        document.Save(document.Path!);
     }
 }
