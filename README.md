@@ -42,6 +42,8 @@ The Format menu's **Format document** command (Ctrl+Shift+F) supports JSON and X
 
 Themes include Dark, Midnight, Graphite, Forest, Warm, Light and System. Named palettes apply to editor controls, scrollbars, Markdown preview and save/discard/cancel prompts. Existing MarkdownPreview preferences are read automatically if no NeoPad settings exist yet; new settings are stored under `%LOCALAPPDATA%\NeoPad`.
 
+AltGr combinations are reserved for text input, including Polish `ś` with AltGr+S; they never trigger application Ctrl shortcuts. The original cyberpunk notebook artwork in `src/MarkdownPreview/Assets` is embedded as a multiresolution Windows icon in the executable, window and installer.
+
 Files above **20 MiB** are rejected before their text is allocated; the current document stays open. Accepted documents above one million characters, 10,000 lines or 20,000 characters on a line use limited mode with automatic highlighting, validation and preview disabled. Explicit JSON/XML formatting remains available up to one million characters, which can make a minified file readable and restore normal editing mode.
 
 One document per independent window. Scratch documents default to Markdown. Save As changes document identity. Unsaved changes are confirmed before destructive document operations. Saves preserve recognized encoding and line endings, use a sibling temporary file, and check external modifications before overwriting.
