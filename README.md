@@ -1,6 +1,6 @@
-# NeoPad
+# NeoNote
 
-NeoPad (formerly MarkdownPreview) is a compact Windows text editor inspired by Windows 10 Notepad, with a live Markdown/HTML preview and format-aware editing. The default interface is Polish and dark; English and a light theme are available in Settings.
+NeoNote (formerly NeoPad / MarkdownPreview) is a compact Windows text editor inspired by Windows 10 Notepad, with a live Markdown/HTML preview and format-aware editing. The default interface is Polish and dark; English and a light theme are available in Settings.
 
 ## Run on Windows
 
@@ -8,7 +8,7 @@ Target: Windows 10 22H2 x64 or newer. Install the Microsoft Edge WebView2 Evergr
 
 Download the `setup.exe` installer or the directly runnable `portable.exe` from the release assets. GitHub's automatically generated source archives are not application packages. The single portable EXE includes .NET and extracts its bundled files on first launch; the installed and extracted-folder variants avoid that extraction step.
 
-Open `NeoPad.exe` or pass a filename as its first argument. The per-user installer registers a Start menu shortcut and an Explorer Open With entry without changing the default Markdown application. Ctrl+wheel and Ctrl+plus/minus zoom the editor and preview without scrolling their viewports; Ctrl+0 resets to 100%. Normal wheel input scrolls as usual.
+Open `NeoNote.exe` or pass a filename as its first argument. The per-user installer registers a Start menu shortcut and an Explorer Open With entry without changing the default Markdown application. Ctrl+wheel and Ctrl+plus/minus zoom the editor and preview without scrolling their viewports; Ctrl+0 resets to 100%. Normal wheel input scrolls as usual.
 
 ## Development
 
@@ -40,9 +40,9 @@ Markdown preview has a 280-DIP minimum width. Close it with the header's × butt
 
 The Format menu's **Format document** command (Ctrl+Shift+F) supports JSON and XML with four-space indentation. It preserves line endings, is one undoable edit, and never saves automatically. Invalid input remains unchanged. Other formats retain their contents without attempting a potentially destructive conversion.
 
-Themes include Dark, Midnight, Graphite, Forest, Warm, Light and System. Named palettes apply to editor controls, scrollbars, Markdown preview and save/discard/cancel prompts. Existing MarkdownPreview preferences are read automatically if no NeoPad settings exist yet; new settings are stored under `%LOCALAPPDATA%\NeoPad`.
+Themes include Dark, Midnight, Graphite, Forest, Warm, Light and System. Named palettes apply to editor controls, scrollbars, Markdown preview and save/discard/cancel prompts. Existing NeoPad preferences are read automatically if no NeoNote settings exist yet, with a MarkdownPreview fallback; new settings are stored under `%LOCALAPPDATA%\NeoNote`.
 
-AltGr combinations are reserved for text input, including Polish `ś` with AltGr+S; they never trigger application Ctrl shortcuts. The original cyberpunk notebook artwork in `src/MarkdownPreview/Assets` is embedded as a multiresolution Windows icon in the executable, window and installer.
+AltGr combinations are reserved for text input, including Polish `ś` with AltGr+S; they never trigger application Ctrl shortcuts. The minimalist turquoise N with an offset violet edge in `src/MarkdownPreview/Assets` is embedded as a multiresolution Windows icon in the executable, window and installer.
 
 Files above **20 MiB** are rejected before their text is allocated; the current document stays open. Accepted documents above one million characters, 10,000 lines or 20,000 characters on a line use limited mode with automatic highlighting, validation and preview disabled. Explicit JSON/XML formatting remains available up to one million characters, which can make a minified file readable and restore normal editing mode.
 
