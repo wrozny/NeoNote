@@ -191,6 +191,7 @@ public partial class MainWindow : Window
     /// <summary>Prevents closing when saving was cancelled or failed.</summary>
     private void OnClosing(object? sender, CancelEventArgs e)
     {
+        if (closing) return;
         try { e.Cancel = !ConfirmDiscard(); }
         catch (Exception error) { e.Cancel = true; MessageBox.Show(this, error.Message, T("Error")); }
         if (e.Cancel) return;
