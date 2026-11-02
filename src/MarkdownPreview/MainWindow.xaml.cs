@@ -326,7 +326,9 @@ public partial class MainWindow : Window
         webStarting = true;
         Preview.Visibility = Visibility.Visible;
         Preview.DefaultBackgroundColor = Dark ? System.Drawing.Color.FromArgb(30, 32, 38) : System.Drawing.Color.FromArgb(250, 251, 253);
-        PreviewNotice.Visibility = Visibility.Visible;
+        // Keep the composed browser unobscured while its graphics surface initializes.
+        PreviewNotice.Visibility = Visibility.Collapsed;
+        PreviewHeading.Text = T("Loading");
         RetryPreviewButton.Visibility = Visibility.Collapsed;
         PreviewMessage.Text = T("Loading");
         try
@@ -336,6 +338,9 @@ public partial class MainWindow : Window
             var environment = await CoreWebView2Environment.CreateAsync(null, folder);
             TracePreview("Browser environment created.");
             if (closing) return;
+            Preview.ApplyTemplate();
+            Preview.UpdateLayout();
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Render);
             await Preview.EnsureCoreWebView2Async(environment);
             if (closing) return;
             Preview.CoreWebView2.Settings.IsScriptEnabled = false;
@@ -349,7 +354,7 @@ public partial class MainWindow : Window
             Preview.CoreWebView2.NavigationCompleted += OnPreviewNavigationCompleted;
             Preview.CoreWebView2.ProcessFailed += OnPreviewProcessFailed;
             Preview.CoreWebView2.Settings.IsZoomControlEnabled = false;
-            webReady = true; ScheduleRefresh();
+            webReady = true; PreviewHeading.Text = T("Preview"); ScheduleRefresh();
             TracePreview("Browser initialized.");
         }
         catch (Exception error) { if (!closing) ShowPreviewFailure(T("PreviewUnavailable") + "\n\n" + error.Message); }
@@ -372,6 +377,7 @@ public partial class MainWindow : Window
     /// <summary>Shows actionable errors rather than leaving an empty preview surface.</summary>
     private void ShowPreviewFailure(string message)
     {
+        PreviewHeading.Text = T("Preview");
         PreviewMessage.Text = message;
         // Composition hosting keeps this error overlay visible above browser content.
         PreviewNotice.Visibility = Visibility.Visible;
