@@ -1,0 +1,17 @@
+{
+  "tag": "v0.1.2",
+  "url": "https://github.com/wrozny/MarkdownPreview/releases/tag/v0.1.2",
+  "draft": false,
+  "prerelease": true,
+  "source_commit": "a95c0692d455c6541c902e2b11296274f1094b52",
+  "workflow": "https://github.com/wrozny/MarkdownPreview/actions/runs/41506001349",
+  "download_checksum_verified": true,
+  "assets": [
+    {
+      "name": "MarkdownPreview-0.1.2-win-x64-portable.exe",
+      "size": 83454507,
+      "url": "https://github.com/wrozny/MarkdownPreview/releases/download/v0.1.2/MarkdownPreview-0.1.2-win-x64-portable.exe",
+      "sha256": "a2d39214708c2126d3425f72153781f952b1dfceba8e49430bc7a980bca771ce"
+    }
+  ]
+}
