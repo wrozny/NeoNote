@@ -1,0 +1,7 @@
+{
+  "report": "System.InvalidOperationException: Preview did not render the expected heading: Przygotowywanie podglądu…\r\n   at MarkdownPreview.MainWindow.VerifyPreviewHeadingAsync(String expected) in D:\\a\\MarkdownPreview\\MarkdownPreview\\src\\MarkdownPreview\\MainWindow.xaml.cs:line 588\r\n   at MarkdownPreview.MainWindow.RunSmokeTest(String reportPath) in D:\\a\\MarkdownPreview\\MarkdownPreview\\src\\MarkdownPreview\\MainWindow.xaml.cs:line 535",
+  "workflow": "https://github.com/wrozny/MarkdownPreview/actions/runs/41503162466",
+  "smoke": "failure",
+  "build": "success",
+  "source_commit": "a5528c89a08fd13d17bbb02c5921915d297672a5"
+}
