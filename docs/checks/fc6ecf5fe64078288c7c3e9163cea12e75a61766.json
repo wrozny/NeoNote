@@ -1,0 +1,7 @@
+{
+  "source_commit": "fc6ecf5fe64078288c7c3e9163cea12e75a61766",
+  "build": "success",
+  "smoke": "success",
+  "workflow": "https://github.com/wrozny/MarkdownPreview/actions/runs/41505482990",
+  "report": "PASSED: WPF editor, save state, search/replace/undo, initial and reopened Markdown/HTML preview, JSON/Markdown transitions, native Ctrl+wheel without scrolling in both panes, normal wheel scrolling, light/dark menu popup colors and localization."
+}
