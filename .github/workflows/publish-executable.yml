@@ -9,7 +9,7 @@ on:
       tag:
         description: Existing version tag to publish
         required: true
-        default: v0.3.0
+        default: v0.3.1
 
 permissions:
   contents: write
@@ -22,18 +22,18 @@ jobs:
   verify-windows:
     uses: ./.github/workflows/windows-ui-check.yml
     with:
-      ref: ${{ inputs.tag || 'v0.3.0' }}
+      ref: ${{ inputs.tag || 'v0.3.1' }}
   publish:
     needs: verify-windows
     runs-on: ubuntu-latest
     env:
-      RELEASE_TAG: ${{ inputs.tag || 'v0.3.0' }}
+      RELEASE_TAG: ${{ inputs.tag || 'v0.3.1' }}
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag || 'v0.3.0' }}
+          ref: ${{ inputs.tag || 'v0.3.1' }}
           fetch-depth: 0
       - uses: actions/setup-dotnet@v4
         with:
