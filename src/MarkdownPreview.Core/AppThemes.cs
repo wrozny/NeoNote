@@ -1,7 +1,10 @@
 namespace MarkdownPreview.Core;
 
 /// <summary>Shared colors used by native editor controls and generated preview pages.</summary>
-public sealed record ThemePalette(bool IsDark, string Surface, string Panel, string Input, string Text, string Muted, string Stroke, string Hover, string Accent);
+public sealed record ThemePalette(bool IsDark, string Surface, string Panel, string Input, string Text, string Muted, string Stroke, string Hover, string Accent)
+{
+    public string Link => IsDark ? "#9CDCFE" : Accent;
+}
 
 /// <summary>Defines stable preference identifiers and coordinated application palettes.</summary>
 public static class AppThemes
