@@ -1,0 +1,7 @@
+{
+  "source_commit": "58e5b169f049e46e512db7fe4625953a2eb275bc",
+  "build": "success",
+  "smoke": "failure",
+  "workflow": "https://github.com/wrozny/MarkdownPreview/actions/runs/41503640085",
+  "report": "No smoke report was produced."
+}
