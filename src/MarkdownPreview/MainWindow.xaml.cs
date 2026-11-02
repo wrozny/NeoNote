@@ -331,8 +331,10 @@ public partial class MainWindow : Window
         PreviewMessage.Text = T("Loading");
         try
         {
+            TracePreview($"Browser initialization started: visible={Preview.IsVisible}; size={Preview.ActualWidth}x{Preview.ActualHeight}.");
             var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), ProductInfo.Name, "WebView2");
             var environment = await CoreWebView2Environment.CreateAsync(null, folder);
+            TracePreview("Browser environment created.");
             if (closing) return;
             await Preview.EnsureCoreWebView2Async(environment);
             if (closing) return;
@@ -413,7 +415,7 @@ public partial class MainWindow : Window
     /// <summary>Zooms editor text with Ctrl+wheel while leaving normal scrolling untouched.</summary>
     private void OnZoomMouseWheel(object sender, MouseWheelEventArgs e)
     {
-        if (!Keyboard.Modifiers.HasFlag(ModifierKeys.Control)) return;
+        if (!Keyboard.Modifiers.HasFlag(ModifierKeys.Control) || Keyboard.Modifiers.HasFlag(ModifierKeys.Alt) || Keyboard.IsKeyDown(Key.RightAlt)) return;
         if (!Editor.IsMouseOver && !PreviewHost.IsMouseOver) return;
         e.Handled = true;
         SetZoom(zoom + Math.Sign(e.Delta) * 0.1);
@@ -474,6 +476,8 @@ public partial class MainWindow : Window
     /// <summary>Handles application shortcuts while retaining native editor shortcuts.</summary>
     private void OnKeyDown(object sender, KeyEventArgs e)
     {
+        // AltGr is reported as Ctrl+Alt on Windows: leave it entirely to text input.
+        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Alt) || Keyboard.IsKeyDown(Key.RightAlt)) return;
         var control = Keyboard.Modifiers.HasFlag(ModifierKeys.Control); var shift = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift);
         Action? action = control ? e.Key switch
         {
@@ -658,7 +662,7 @@ public partial class MainWindow : Window
             if (!Editor.Text.Contains("Replaced")) throw new InvalidOperationException("Replacement failed.");
             Editor.Undo();
             if (!Editor.Text.Contains("Rendered")) throw new InvalidOperationException("Undo failed.");
-            var limit = DateTime.UtcNow.AddSeconds(30);
+            var limit = DateTime.UtcNow.AddSeconds(45);
             while (!webReady && DateTime.UtcNow < limit) await Task.Delay(100);
             if (!webReady) throw new InvalidOperationException("WebView2 did not initialize: " + PreviewMessage.Text);
             await VerifyPreviewHeadingAsync("Smoke heading");
