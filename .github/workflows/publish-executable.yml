@@ -9,7 +9,7 @@ on:
       tag:
         description: Existing version tag to publish
         required: true
-        default: v0.1.2
+        default: v0.2.0
 
 permissions:
   contents: write
@@ -22,18 +22,18 @@ jobs:
   verify-windows:
     uses: ./.github/workflows/windows-ui-check.yml
     with:
-      ref: ${{ inputs.tag || 'v0.1.2' }}
+      ref: ${{ inputs.tag || 'v0.2.0' }}
   publish:
     needs: verify-windows
     runs-on: ubuntu-latest
     env:
-      RELEASE_TAG: ${{ inputs.tag || 'v0.1.2' }}
+      RELEASE_TAG: ${{ inputs.tag || 'v0.2.0' }}
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag || 'v0.1.2' }}
+          ref: ${{ inputs.tag || 'v0.2.0' }}
           fetch-depth: 0
       - uses: actions/setup-dotnet@v4
         with:
@@ -48,9 +48,9 @@ jobs:
           set -euo pipefail
           version="${RELEASE_TAG#v}"
           dotnet publish src/MarkdownPreview/MarkdownPreview.csproj -c Release -r win-x64 --self-contained true -p:Version="$version" -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -p:EnableCompressionInSingleFile=true -o artifacts/executable
-          cp artifacts/executable/MarkdownPreview.exe "artifacts/MarkdownPreview-$version-win-x64-portable.exe"
+          cp artifacts/executable/NeoPad.exe "artifacts/NeoPad-$version-win-x64-portable.exe"
           cd artifacts
-          sha256sum "MarkdownPreview-$version-win-x64-portable.exe" > SHA256SUMS.txt
+          sha256sum "NeoPad-$version-win-x64-portable.exe" > SHA256SUMS.txt
       - name: Create a Release and upload the executable
         id: upload
         shell: bash
@@ -58,14 +58,23 @@ jobs:
           set -euo pipefail
           exec 2> >(tee /tmp/publication-error.txt >&2)
           cat > /tmp/release-notes.md <<'NOTES'
-          Download the attached **MarkdownPreview-*-win-x64-portable.exe** to run the application on Windows 10 22H2 x64 or newer. This is a ready-to-run application, not source code. It includes .NET and extracts its bundled files on first launch. Microsoft Edge WebView2 Runtime is required for Markdown preview.
+          Download the attached **NeoPad-*-win-x64-portable.exe** to run the application on Windows 10 22H2 x64 or newer. This is a ready-to-run application, not source code. It includes .NET and extracts its bundled files on first launch. Microsoft Edge WebView2 Runtime is required for Markdown preview.
 
-          This preview release corrects Markdown preview hosting and prevents Ctrl+wheel from scrolling either pane. The Windows executable must pass an actual WPF/WebView2 test, including rendered Markdown/HTML, reopening files and native Ctrl+wheel input, before publication. Browser and composed-window screenshots are captured for review. Full Windows 10 acceptance remains separate from the hosted Windows runner check.
+          NeoPad is the new name of MarkdownPreview, with an original cyberpunk notebook icon. Existing editor preferences are retained when no NeoPad settings exist yet.
+
+          - Preview panes keep their width across font changes, have a minimum width, and can be closed and reopened independently of file format.
+          - Splitter drags are bounded even outside the application window.
+          - Format document (Ctrl+Shift+F) indents JSON and XML as one undoable edit.
+          - New Midnight, Graphite, Forest and Warm palettes also style preview pages, scrollbars and Save/Discard/Cancel dialogs.
+          - AltGr is reserved for typing, including Polish ś.
+          - Files above 20 MiB are refused before allocating text. Larger accepted documents use limited automatic analysis to protect responsiveness.
+
+          Publication requires the actual Windows executable to pass WPF/WebView2 checks for rendering, native wheel gestures, splitters, fonts, preview visibility, palettes, save choices, formatting and file-size safeguards. Full Windows 10 acceptance remains separate from the hosted Windows runner check.
 
           GitHub adds source-code archives automatically; they are separate from the executable asset. SHA256SUMS.txt contains the executable checksum.
           NOTES
           if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release create "$RELEASE_TAG" --verify-tag --draft --prerelease --title "MarkdownPreview $RELEASE_TAG" --notes-file /tmp/release-notes.md
+            gh release create "$RELEASE_TAG" --verify-tag --draft --prerelease --title "NeoPad $RELEASE_TAG" --notes-file /tmp/release-notes.md
           fi
           gh release upload "$RELEASE_TAG" artifacts/*-portable.exe artifacts/SHA256SUMS.txt --clobber
           gh release edit "$RELEASE_TAG" --draft=false --prerelease --notes-file /tmp/release-notes.md
