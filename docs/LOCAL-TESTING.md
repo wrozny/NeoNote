@@ -11,10 +11,10 @@ Run Codex CLI in PowerShell in your local clone of this repository. A local sess
 Extract a new portable package, then run the included script:
 
 ```powershell
-powershell -File .\diagnose-windows.ps1 -Executable .\NeoPad.exe
+powershell -File .\diagnose-windows.ps1 -Executable .\NeoNote.exe
 ```
 
-The script runs the actual WPF application with generated Markdown and JSON files. It verifies initial preview rendering, reopening Markdown after JSON, HTML, search/replace, undo, zoom and light/dark menu surfaces. Native Windows input also checks that Ctrl+wheel zooms without scrolling and plain wheel input still scrolls in both panes. It writes `platform.txt`, `smoke-result.txt` and browser/window PNG screenshots under `%TEMP%\NeoPad-Diagnostics-*`. No report is uploaded. The test does not open your own documents or save changed editor preferences. Close other application windows first to avoid confusing multiple visible windows during the test.
+The script runs the actual WPF application with generated Markdown and JSON files. It verifies initial preview rendering, reopening Markdown after JSON, HTML, search/replace, undo, zoom and light/dark menu surfaces. Native Windows input also checks that Ctrl+wheel zooms without scrolling and plain wheel input still scrolls in both panes. It writes `platform.txt`, `smoke-result.txt` and browser/window PNG screenshots under `%TEMP%\NeoNote-Diagnostics-*`. No report is uploaded. The test does not open your own documents or save changed editor preferences. Close other application windows first to avoid confusing multiple visible windows during the test.
 
 Share these two report files if a test fails. Include a screenshot separately when reporting appearance problems. Reports may contain local paths from exception messages; review them before sharing.
 
