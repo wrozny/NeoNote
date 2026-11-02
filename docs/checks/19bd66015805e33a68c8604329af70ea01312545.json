@@ -1,0 +1,7 @@
+{
+  "build": "success",
+  "workflow": "https://github.com/wrozny/MarkdownPreview/actions/runs/41504982099",
+  "smoke": "failure",
+  "report": "System.InvalidOperationException: Preview did not render the expected heading: Przygotowywanie podglądu…. Pending=True; notice=Visible; pane=481x533; browser=\"{\\\"url\\\":\\\"about:blank\\\",\\\"body\\\":\\\"\\\",\\\"width\\\":481,\\\"height\\\":533}\"\r\n   at MarkdownPreview.MainWindow.VerifyPreviewHeadingAsync(String expected) in D:\\a\\MarkdownPreview\\MarkdownPreview\\src\\MarkdownPreview\\MainWindow.xaml.cs:line 607\r\n   at MarkdownPreview.MainWindow.RunSmokeTest(String reportPath) in D:\\a\\MarkdownPreview\\MarkdownPreview\\src\\MarkdownPreview\\MainWindow.xaml.cs:line 551\n\nPreview lifecycle:\nRendered revision 4, HTML length 78, ready=False.\nBrowser initialized.\nRendered revision 5, HTML length 78, ready=True.\nNavigating generated HTML, length 1548.\nNavigation starting: 2; scheme=data; pending=True.\nNavigation completed: 2; active=0; success=False; status=OperationCanceled.",
+  "source_commit": "19bd66015805e33a68c8604329af70ea01312545"
+}
