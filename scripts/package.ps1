@@ -1,0 +1,25 @@
+param([string]$Version = '0.1.0')
+$ErrorActionPreference = 'Stop'
+Set-Location (Join-Path $PSScriptRoot '..')
+
+# Publish a portable Windows app with .NET included; WebView2 remains shared.
+dotnet publish src/MarkdownPreview/MarkdownPreview.csproj -c Release -r win-x64 --self-contained true -p:Version=$Version -o artifacts/win-x64
+if ($LASTEXITCODE -ne 0) { throw 'Publishing failed.' }
+Copy-Item README.md artifacts/win-x64/README.md
+Copy-Item THIRD-PARTY-NOTICES.md artifacts/win-x64/THIRD-PARTY-NOTICES.md
+Compress-Archive -Path artifacts/win-x64/* -DestinationPath "artifacts/MarkdownPreview-$Version-win-x64.zip" -Force
+
+# Build the per-user installer using the signed Inno Setup installation.
+$compiler = Get-Command ISCC.exe -ErrorAction SilentlyContinue
+if (-not $compiler) {
+    $compilerPath = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6/ISCC.exe'
+    if (-not (Test-Path $compilerPath)) { throw 'Install Inno Setup 6 to build the installer.' }
+} else { $compilerPath = $compiler.Source }
+& $compilerPath "/DAppVersion=$Version" "/DPublishDirectory=$((Resolve-Path artifacts/win-x64).Path)" packaging/MarkdownPreview.iss
+if ($LASTEXITCODE -ne 0) { throw 'Installer compilation failed.' }
+
+# Record checksums of distributable files rather than build intermediates.
+Get-ChildItem artifacts -File | Where-Object { $_.Extension -in '.zip', '.exe' } | ForEach-Object {
+    $hash = Get-FileHash $_.FullName -Algorithm SHA256
+    "$($hash.Hash.ToLowerInvariant())  $($_.Name)"
+} | Set-Content artifacts/SHA256SUMS.txt
