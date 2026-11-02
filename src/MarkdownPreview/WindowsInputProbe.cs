@@ -30,6 +30,18 @@ internal static class WindowsInputProbe
     [DllImport("user32.dll", SetLastError = true)]
     private static extern uint SendInput(uint count, Input[] inputs, int size);
 
+    /// <summary>Loads a keyboard layout for a controlled text-input regression test.</summary>
+    [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern IntPtr LoadKeyboardLayout(string name, uint flags);
+
+    /// <summary>Reads the current thread keyboard layout so a test can restore it.</summary>
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetKeyboardLayout(uint threadId);
+
+    /// <summary>Changes only the test thread's active keyboard layout.</summary>
+    [DllImport("user32.dll")]
+    private static extern IntPtr ActivateKeyboardLayout(IntPtr layout, uint flags);
+
     /// <summary>Sends wheel input to an actual screen location and optionally holds Control for the gesture.</summary>
     public static async Task WheelAsync(FrameworkElement pane, int delta, bool control)
     {
@@ -68,5 +80,29 @@ internal static class WindowsInputProbe
         }
         finally { Send([new Input { Data = new InputData { Mouse = new MouseInput { Flags = 0x0004 } } }]); }
         await Task.Delay(200);
+    }
+
+    /// <summary>Types ś with real AltGr+S on the Polish Programmer layout and restores the prior layout.</summary>
+    public static async Task TypePolishSAsync(FrameworkElement target)
+    {
+        var previous = GetKeyboardLayout(0);
+        var polish = LoadKeyboardLayout("00000415", 0);
+        if (polish == IntPtr.Zero) throw new System.ComponentModel.Win32Exception();
+        ActivateKeyboardLayout(polish, 0); target.Focus();
+        var control = new Input { Type = 1, Data = new InputData { Keyboard = new KeyboardInput { Key = 0xA2 } } };
+        var alt = new Input { Type = 1, Data = new InputData { Keyboard = new KeyboardInput { Key = 0xA5, Flags = 1 } } };
+        var letter = new Input { Type = 1, Data = new InputData { Keyboard = new KeyboardInput { Key = 0x53 } } };
+        try
+        {
+            Send([control, alt]); await Task.Delay(100);
+            Send([letter]); letter.Data.Keyboard.Flags = 2; Send([letter]);
+            await Task.Delay(150);
+        }
+        finally
+        {
+            alt.Data.Keyboard.Flags = 3; control.Data.Keyboard.Flags = 2; Send([alt, control]);
+            ActivateKeyboardLayout(previous, 0);
+        }
+        await Task.Delay(100);
     }
 }
