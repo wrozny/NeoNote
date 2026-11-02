@@ -11,12 +11,17 @@ public sealed class Preferences
     public string Font { get; set; } = "Consolas";
     public double FontSize { get; set; } = 15;
     public bool WordWrap { get; set; }
-    private static string SettingsPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MarkdownPreview", "settings.json");
+    private static string SettingsPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), ProductInfo.Name, "settings.json");
 
     /// <summary>Loads preferences, tolerating a missing or damaged local settings file.</summary>
     public static Preferences Load()
     {
-        try { return JsonSerializer.Deserialize<Preferences>(File.ReadAllText(SettingsPath)) ?? new(); }
+        try
+        {
+            var path = SettingsPath;
+            if (!File.Exists(path)) path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MarkdownPreview", "settings.json");
+            return JsonSerializer.Deserialize<Preferences>(File.ReadAllText(path)) ?? new();
+        }
         catch (Exception error) when (error is IOException or JsonException or UnauthorizedAccessException) { return new(); }
     }
 
