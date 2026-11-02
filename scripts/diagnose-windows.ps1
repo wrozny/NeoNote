@@ -1,7 +1,7 @@
 param([Parameter(Mandatory = $true)][string]$Executable)
 $ErrorActionPreference = 'Stop'
 $executablePath = (Resolve-Path $Executable).Path
-$reportDirectory = Join-Path $env:TEMP ("NeoPad-Diagnostics-" + (Get-Date -Format 'yyyyMMdd-HHmmss'))
+$reportDirectory = Join-Path $env:TEMP ("NeoNote-Diagnostics-" + (Get-Date -Format 'yyyyMMdd-HHmmss'))
 New-Item -ItemType Directory -Path $reportDirectory | Out-Null
 $reportPath = Join-Path $reportDirectory 'smoke-result.txt'
 
