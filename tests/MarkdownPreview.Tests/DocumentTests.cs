@@ -69,4 +69,14 @@ public sealed class DocumentTests : IDisposable
     [InlineData("a.ini", FileFormat.Ini)] [InlineData("a.toml", FileFormat.Toml)]
     [InlineData("a.md", FileFormat.Markdown)] [InlineData("a.unknown", FileFormat.Text)]
     public void DetectsFileFormats(string path, FileFormat expected) => Assert.Equal(expected, Document.DetectFormat(path));
+
+    /// <summary>Refuses a 61 MB file before allocating text or running parsers.</summary>
+    [Fact]
+    public void OversizedFilesAreRejectedBeforeReading()
+    {
+        var path = Path.Combine(directory, "large.json");
+        using (var stream = File.Create(path)) stream.SetLength(61_000_000);
+        var error = Assert.Throws<DocumentTooLargeException>(() => Document.Open(path));
+        Assert.Equal(61_000_000, error.ActualBytes);
+    }
 }
