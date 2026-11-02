@@ -42,8 +42,8 @@ public static class Rendering
         palette.Text + ";background:" + palette.Surface +
         "}pre,code{font-family:Consolas,monospace;background:" + palette.Panel +
         ";border-radius:6px}pre{padding:18px;overflow:auto;line-height:1.5;border:1px solid " + palette.Stroke +
-        "}code{padding:2px 5px;font-size:.9em}pre code{padding:0}a{color:" + palette.Accent +
-        ";text-underline-offset:3px}h1,h2,h3{line-height:1.3;letter-spacing:-.025em;margin-top:1.4em}h1{font-size:2em}h2{font-size:1.5em}" +
+        "}code{padding:2px 5px;font-size:.9em}pre code{padding:0}a,a:visited{color:" + palette.Link +
+        ";text-underline-offset:3px}a:hover,a:focus-visible{color:" + palette.Text + "}h1,h2,h3{line-height:1.3;letter-spacing:-.025em;margin-top:1.4em}h1{font-size:2em}h2{font-size:1.5em}" +
         "table{border-collapse:collapse;width:100%;margin:20px 0}td,th{border:1px solid " + palette.Stroke +
         ";padding:8px 12px;text-align:left}th{background:" + palette.Panel +
         "}blockquote{border-left:3px solid " + palette.Accent + ";margin-left:0;padding:4px 18px;color:" + palette.Muted +
