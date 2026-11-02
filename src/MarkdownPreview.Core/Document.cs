@@ -7,6 +7,7 @@ public enum FileFormat { Markdown, Json, Xml, Ini, Toml, Text }
 /// <summary>Owns document identity and preserves encoding during atomic saves.</summary>
 public sealed class Document
 {
+    public const long MaximumFileBytes = 20 * 1024 * 1024;
     public string? Path { get; private set; }
     public string Text { get; set; } = "";
     public string SavedText { get; private set; } = "";
@@ -28,7 +29,10 @@ public sealed class Document
     public static Document Open(string path)
     {
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-        var bytes = File.ReadAllBytes(path);
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+        if (stream.Length > MaximumFileBytes) throw new DocumentTooLargeException(stream.Length);
+        var bytes = new byte[(int)stream.Length];
+        stream.ReadExactly(bytes);
         Encoding encoding = new UTF8Encoding(false, true);
         var offset = 0;
         if (bytes.AsSpan().StartsWith(new byte[] { 0xEF, 0xBB, 0xBF })) { encoding = new UTF8Encoding(true, true); offset = 3; }
@@ -45,7 +49,7 @@ public sealed class Document
 
     /// <summary>Detects external modifications, including deletion.</summary>
     public bool HasExternalChanges() => Path is not null &&
-        (!File.Exists(Path) || !File.ReadAllBytes(Path).AsSpan().SequenceEqual(DiskBytes));
+        (!File.Exists(Path) || new FileInfo(Path).Length != DiskBytes?.LongLength || !File.ReadAllBytes(Path).AsSpan().SequenceEqual(DiskBytes));
 
     /// <summary>Writes to a sibling temporary file and updates identity only after a successful replacement.</summary>
     public void Save(string path)
