@@ -1,0 +1,17 @@
+{
+  "tag": "v0.2.0",
+  "url": "https://github.com/wrozny/MarkdownPreview/releases/tag/v0.2.0",
+  "draft": false,
+  "prerelease": true,
+  "source_commit": "5c23df449a395b012f7bb80e29bf331393a66638",
+  "workflow": "https://github.com/wrozny/MarkdownPreview/actions/runs/41515330552",
+  "download_checksum_verified": true,
+  "assets": [
+    {
+      "name": "NeoPad-0.2.0-win-x64-portable.exe",
+      "size": 83813195,
+      "url": "https://github.com/wrozny/MarkdownPreview/releases/download/v0.2.0/NeoPad-0.2.0-win-x64-portable.exe",
+      "sha256": "49045bbd8aa861fb89a87b75b2669d64677bbd2377ec5904969d8ac13ad8d028"
+    }
+  ]
+}
