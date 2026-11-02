@@ -34,8 +34,10 @@ jobs:
         with:
           dotnet-version: '10.0.x'
       - name: Test core behavior
+        id: tests
         run: dotnet test tests/MarkdownPreview.Tests/MarkdownPreview.Tests.csproj -c Release
       - name: Build the Windows executable
+        id: build
         shell: bash
         run: |
           set -euo pipefail
@@ -45,9 +47,11 @@ jobs:
           cd artifacts
           sha256sum "MarkdownPreview-$version-win-x64-portable.exe" > SHA256SUMS.txt
       - name: Create a Release and upload the executable
+        id: upload
         shell: bash
         run: |
           set -euo pipefail
+          exec 2> >(tee /tmp/publication-error.txt >&2)
           cat > /tmp/release-notes.md <<'NOTES'
           Download the attached **MarkdownPreview-*-win-x64-portable.exe** to run the application on Windows 10 22H2 x64 or newer. This is a ready-to-run application, not source code. It includes .NET and extracts its bundled files on first launch. Microsoft Edge WebView2 Runtime is required for Markdown preview.
 
@@ -61,6 +65,7 @@ jobs:
           gh release upload "$RELEASE_TAG" artifacts/*-portable.exe artifacts/SHA256SUMS.txt --clobber
           gh release edit "$RELEASE_TAG" --draft=false --prerelease --notes-file /tmp/release-notes.md
       - name: Download the published asset and verify its checksum
+        id: verify
         shell: bash
         run: |
           set -euo pipefail
@@ -91,5 +96,33 @@ jobs:
           git add "docs/releases/$RELEASE_TAG.json"
           if ! git diff --cached --quiet; then
             git commit -m "Verified $RELEASE_TAG executable publication" -m $'- Published the Windows executable as a GitHub Release asset\n- Downloaded the asset and verified its SHA-256 checksum'
+            git push origin release-receipts
+          fi
+      - name: Record publication failures for diagnosis
+        if: failure()
+        env:
+          TEST_OUTCOME: ${{ steps.tests.outcome }}
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
+          UPLOAD_OUTCOME: ${{ steps.upload.outcome }}
+          VERIFY_OUTCOME: ${{ steps.verify.outcome }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          touch /tmp/publication-error.txt
+          jq -n --arg tag "$RELEASE_TAG" --arg run "https://github.com/$GH_REPO/actions/runs/$GITHUB_RUN_ID" --arg tests "$TEST_OUTCOME" --arg build "$BUILD_OUTCOME" --arg upload "$UPLOAD_OUTCOME" --arg verify "$VERIFY_OUTCOME" --rawfile error /tmp/publication-error.txt '{tag: $tag, workflow: $run, status: "failed", tests: $tests, build: $build, upload: $upload, verify: $verify, publication_error: $error}' > /tmp/publication-failure.json
+          if git ls-remote --exit-code --heads origin release-receipts >/dev/null 2>&1; then
+            git fetch origin release-receipts
+            git switch -C release-receipts FETCH_HEAD
+          else
+            git fetch origin main
+            git switch -c release-receipts origin/main
+          fi
+          mkdir -p docs/releases
+          cp /tmp/publication-failure.json "docs/releases/$RELEASE_TAG-failure.json"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "docs/releases/$RELEASE_TAG-failure.json"
+          if ! git diff --cached --quiet; then
+            git commit -m "Recorded $RELEASE_TAG publication failure" -m $'- Preserved the failing stage and release CLI error\n- Linked the workflow run for diagnosis'
             git push origin release-receipts
           fi
