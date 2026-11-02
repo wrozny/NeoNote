@@ -35,12 +35,18 @@ public static class Rendering
     /// <summary>Builds a script-free preview with a constrained content security policy.</summary>
     public static string Preview(string body, bool dark) => "<!doctype html><html><head><meta charset='utf-8'>" +
         "<meta http-equiv='Content-Security-Policy' content=\"default-src 'none'; img-src https: http: data:; style-src 'unsafe-inline'; script-src 'none'; frame-src 'none'; form-action 'none'\">" +
-        "<style>body{font:16px/1.65 Segoe UI,sans-serif;padding:20px 32px;overflow-wrap:anywhere;color:" +
-        (dark ? "#ddd;background:#202124" : "#24292f;background:#fff") +
-        "}pre,code{font-family:Consolas,monospace;background:" + (dark ? "#303238" : "#eef0f3") +
-        ";border-radius:4px}pre{padding:16px;overflow:auto}code{padding:2px 4px}pre code{padding:0}a{color:#58a6ff}" +
-        "table{border-collapse:collapse}td,th{border:1px solid #777;padding:6px 12px}blockquote{border-left:3px solid #888;margin-left:0;padding-left:16px}" +
-        "img{max-width:100%}h1,h2{border-bottom:1px solid #666;padding-bottom:6px}input{pointer-events:none}</style></head><body>" + body + "</body></html>";
+        "<style>:root{color-scheme:" + (dark ? "dark" : "light") + "}*{box-sizing:border-box}body{font:15px/1.75 'Segoe UI',sans-serif;margin:0 auto;max-width:900px;padding:28px 34px 60px;overflow-wrap:anywhere;color:" +
+        (dark ? "#e5e7eb;background:#1e2026" : "#202632;background:#fafbfd") +
+        "}pre,code{font-family:Consolas,monospace;background:" + (dark ? "#272b35" : "#edf0f5") +
+        ";border-radius:6px}pre{padding:18px;overflow:auto;line-height:1.5;border:1px solid " + (dark ? "#373c49" : "#d8dde7") +
+        "}code{padding:2px 5px;font-size:.9em}pre code{padding:0}a{color:" + (dark ? "#82aaff" : "#245dc1") +
+        ";text-underline-offset:3px}h1,h2,h3{line-height:1.3;letter-spacing:-.025em;margin-top:1.4em}h1{font-size:2em}h2{font-size:1.5em}" +
+        "table{border-collapse:collapse;width:100%;margin:20px 0}td,th{border:1px solid " + (dark ? "#373c49" : "#d8dde7") +
+        ";padding:8px 12px;text-align:left}th{background:" + (dark ? "#252832" : "#f0f2f6") +
+        "}blockquote{border-left:3px solid #82aaff;margin-left:0;padding:4px 18px;color:" + (dark ? "#aeb8c9" : "#657086") +
+        "}img{max-width:100%;border-radius:6px}h1,h2{border-bottom:1px solid " + (dark ? "#373c49" : "#d8dde7") +
+        ";padding-bottom:10px}input{pointer-events:none}hr{border:0;border-top:1px solid #657086;margin:28px 0}::selection{background:#385580;color:#fff}" +
+        "@media(max-width:450px){body{padding:18px}}::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:#657086;border-radius:6px}</style></head><body>" + body + "</body></html>";
 
     /// <summary>Returns syntax errors with one-based locations for the selected format.</summary>
     public static IReadOnlyList<Diagnostic> Validate(string text, FileFormat format)
