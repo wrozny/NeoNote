@@ -1,0 +1,95 @@
+name: Publish executable release
+
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/publish-executable.yml]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing version tag to publish
+        required: true
+        default: v0.1.1
+
+permissions:
+  contents: write
+
+concurrency:
+  group: executable-release-publication
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ inputs.tag || 'v0.1.1' }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || 'v0.1.1' }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Test core behavior
+        run: dotnet test tests/MarkdownPreview.Tests/MarkdownPreview.Tests.csproj -c Release
+      - name: Build the Windows executable
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${RELEASE_TAG#v}"
+          dotnet publish src/MarkdownPreview/MarkdownPreview.csproj -c Release -r win-x64 --self-contained true -p:Version="$version" -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -p:EnableCompressionInSingleFile=true -o artifacts/executable
+          cp artifacts/executable/MarkdownPreview.exe "artifacts/MarkdownPreview-$version-win-x64-portable.exe"
+          cd artifacts
+          sha256sum "MarkdownPreview-$version-win-x64-portable.exe" > SHA256SUMS.txt
+      - name: Create a Release and upload the executable
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/release-notes.md <<'NOTES'
+          Download the attached **MarkdownPreview-*-win-x64-portable.exe** to run the application on Windows 10 22H2 x64 or newer. This is a ready-to-run application, not source code. It includes .NET and extracts its bundled files on first launch. Microsoft Edge WebView2 Runtime is required for Markdown preview.
+
+          This preview release includes Ctrl+wheel zoom, native dark title-bar styling, themed menu and settings controls, and corrected WebView2 initialization. Core tests and Windows cross-compilation are checked before publication. Native Windows UI acceptance remains a separate check; this preview does not claim that Windows 10 acceptance has completed.
+
+          GitHub adds source-code archives automatically; they are separate from the executable asset. SHA256SUMS.txt contains the executable checksum.
+          NOTES
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --verify-tag --draft --prerelease --title "MarkdownPreview $RELEASE_TAG" --notes-file /tmp/release-notes.md
+          fi
+          gh release upload "$RELEASE_TAG" artifacts/*-portable.exe artifacts/SHA256SUMS.txt --clobber
+          gh release edit "$RELEASE_TAG" --draft=false --prerelease --notes-file /tmp/release-notes.md
+      - name: Download the published asset and verify its checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/published-executable
+          gh release download "$RELEASE_TAG" --pattern '*-portable.exe' --dir /tmp/published-executable
+          cp artifacts/SHA256SUMS.txt /tmp/published-executable/
+          (cd /tmp/published-executable && sha256sum --check SHA256SUMS.txt)
+          gh api "repos/$GH_REPO/releases/tags/$RELEASE_TAG" > /tmp/published-release.json
+          jq -e '.draft == false and any(.assets[]; (.name | endswith("-portable.exe")) and .size > 0 and .state == "uploaded")' /tmp/published-release.json
+      - name: Record verified publication for Git-only clients
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_commit="$(git rev-parse HEAD)"
+          checksum="$(cut -d ' ' -f 1 artifacts/SHA256SUMS.txt)"
+          jq --arg sha256 "$checksum" --arg commit "$source_commit" --arg run "https://github.com/$GH_REPO/actions/runs/$GITHUB_RUN_ID" '{tag: .tag_name, url: .html_url, draft: .draft, prerelease: .prerelease, source_commit: $commit, workflow: $run, download_checksum_verified: true, assets: [.assets[] | select(.name | endswith("-portable.exe")) | {name, size, url: .browser_download_url, sha256: $sha256}]}' /tmp/published-release.json > /tmp/publication-receipt.json
+          if git ls-remote --exit-code --heads origin release-receipts >/dev/null 2>&1; then
+            git fetch origin release-receipts
+            git switch -C release-receipts FETCH_HEAD
+          else
+            git fetch origin main
+            git switch -c release-receipts origin/main
+          fi
+          mkdir -p docs/releases
+          cp /tmp/publication-receipt.json "docs/releases/$RELEASE_TAG.json"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "docs/releases/$RELEASE_TAG.json"
+          if ! git diff --cached --quiet; then
+            git commit -m "Verified $RELEASE_TAG executable publication" -m $'- Published the Windows executable as a GitHub Release asset\n- Downloaded the asset and verified its SHA-256 checksum'
+            git push origin release-receipts
+          fi
