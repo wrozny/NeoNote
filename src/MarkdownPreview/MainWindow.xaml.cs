@@ -616,8 +616,8 @@ public partial class MainWindow : Window
     /// <summary>Verifies real Ctrl+wheel suppresses scrolling and ordinary wheel input still scrolls both panes.</summary>
     private async Task VerifyWheelGesturesAsync()
     {
-        Editor.Text = "# Smoke heading\n\n" + string.Join("\n\n", Enumerable.Range(1, 100).Select(i => $"Paragraph {i}: sample document content."));
-        await VerifyPreviewHeadingAsync("Smoke heading");
+        Editor.Text = "# Wheel heading\n\n" + string.Join("\n\n", Enumerable.Range(1, 100).Select(i => $"Paragraph {i}: sample document content."));
+        await VerifyPreviewHeadingAsync("Wheel heading");
         Editor.ScrollToVerticalOffset(200);
         await Preview.CoreWebView2.ExecuteScriptAsync("window.scrollTo(0, 200)");
         await Task.Delay(200);
@@ -626,12 +626,22 @@ public partial class MainWindow : Window
         await WindowsInputProbe.WheelAsync(Editor, 120, true);
         if (zoom <= scale || Math.Abs(Editor.VerticalOffset - offset) > 1)
             throw new InvalidOperationException($"Editor Ctrl+wheel scrolled or failed to zoom: {offset} -> {Editor.VerticalOffset}, scale {scale} -> {zoom}.");
+        scale = zoom;
+        await WindowsInputProbe.WheelAsync(Editor, -120, true);
+        if (zoom >= scale || Math.Abs(Editor.VerticalOffset - offset) > 1)
+            throw new InvalidOperationException("Editor Ctrl+wheel zoom-out changed the scroll position.");
         var y = double.Parse(await Preview.CoreWebView2.ExecuteScriptAsync("window.scrollY"), System.Globalization.CultureInfo.InvariantCulture);
+        if (y < 100) throw new InvalidOperationException("Preview wheel test did not start at a scrolled position.");
         scale = zoom;
         await WindowsInputProbe.WheelAsync(Preview, 120, true);
         var after = double.Parse(await Preview.CoreWebView2.ExecuteScriptAsync("window.scrollY"), System.Globalization.CultureInfo.InvariantCulture);
         if (zoom <= scale || Math.Abs(y - after) > 1)
             throw new InvalidOperationException($"Preview Ctrl+wheel scrolled or failed to zoom: {y} -> {after}, scale {scale} -> {zoom}.");
+        scale = zoom;
+        await WindowsInputProbe.WheelAsync(Preview, -120, true);
+        after = double.Parse(await Preview.CoreWebView2.ExecuteScriptAsync("window.scrollY"), System.Globalization.CultureInfo.InvariantCulture);
+        if (zoom >= scale || Math.Abs(y - after) > 1)
+            throw new InvalidOperationException("Preview Ctrl+wheel zoom-out changed the scroll position.");
         await WindowsInputProbe.WheelAsync(Preview, -120, false);
         after = double.Parse(await Preview.CoreWebView2.ExecuteScriptAsync("window.scrollY"), System.Globalization.CultureInfo.InvariantCulture);
         if (after <= y) throw new InvalidOperationException("Normal preview wheel input did not scroll.");
