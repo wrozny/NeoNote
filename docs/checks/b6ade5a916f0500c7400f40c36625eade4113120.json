@@ -1,0 +1,7 @@
+{
+  "build": "success",
+  "report": "System.InvalidOperationException: WebView2 did not initialize: Przygotowywanie podglądu…\r\n   at MarkdownPreview.MainWindow.RunSmokeTest(String reportPath)\n\nPreview lifecycle:\nRendered revision 4, HTML length 78, ready=False.",
+  "smoke": "failure",
+  "source_commit": "b6ade5a916f0500c7400f40c36625eade4113120",
+  "workflow": "https://github.com/wrozny/MarkdownPreview/actions/runs/41513668144"
+}
