@@ -47,6 +47,12 @@ public partial class MainWindow
             if (((SolidColorBrush)Editor.Background).Color != (Color)ColorConverter.ConvertFromString(palette.Surface))
                 throw new InvalidOperationException("Editor did not use palette " + name);
             await VerifyPreviewPaletteAsync(palette);
+            var link = (Color)ColorConverter.ConvertFromString(palette.Link);
+            var brush = (SolidColorBrush)Editor.TextArea.TextView.LinkTextForegroundBrush;
+            if (brush.Color != link) throw new InvalidOperationException("Editor hyperlinks did not use the palette's readable link color.");
+            var actual = await Preview.CoreWebView2.ExecuteScriptAsync("getComputedStyle(document.querySelector('a')).color");
+            if (actual != $"\"rgb({link.R}, {link.G}, {link.B})\"")
+                throw new InvalidOperationException("Preview hyperlinks did not use the palette's readable link color.");
         }
         preferences.Theme = "Midnight"; ApplyPreferences();
         await VerifyPreviewPaletteAsync(Palette);
