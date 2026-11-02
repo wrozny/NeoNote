@@ -2,7 +2,7 @@
 
 Target: Windows 10 22H2 x64 with current Edge WebView2 Runtime. A Linux cross-build does not establish these results. Record OS, runtime versions, package checksum, and results before promoting a prerelease.
 
-- Install per user without administrator rights; find MarkdownPreview through Start search. Uninstall and confirm the Start shortcut and application registration disappear while documents remain intact.
+- Install per user without administrator rights; find NeoPad through Start search. Uninstall and confirm the Start shortcut and application registration disappear while documents remain intact.
 - Launch a blank window. Confirm `*Bez tytułu - MarkdownPreview`, a responsive editor, and Markdown preview.
 - Check Ctrl+wheel in both panes, Ctrl+plus/minus, Ctrl+0 and zoom bounds (50–300%); confirm ordinary wheel input still scrolls.
 - Check the native title bar and every nested menu and settings dropdown in both light and dark themes. Test theme changes while the application is open.
@@ -19,6 +19,11 @@ Target: Windows 10 22H2 x64 with current Edge WebView2 Runtime. A Linux cross-bu
 - Edit/delete a file externally; confirm reload prompts and overwrite protection. Test declining a reload followed by saving.
 - Launch by command-line path, Explorer Open With and drag/drop. Test Unicode paths and spaces.
 - Test without WebView2: text editing and saving must work, with an explanatory preview message.
+- Drag the splitter beyond both sides of the application; confirm the editor stays at least 260 DIP wide and preview 280 DIP wide. Change font family and size after a drag and confirm neither pane collapses.
+- Close the Markdown preview, change font and theme, switch to JSON and back. Confirm the reopen button appears only for hidden Markdown preview and restores the pane without changing document text or format.
+- Exercise Save / Don't save / Cancel, Escape and closing the themed confirmation dialog. Check scrollbar track/thumb colors and dragging in every palette.
+- Format compact JSON and XML; confirm indentation, unchanged disk contents until Save, and one-step Undo. Invalid input must produce a themed error without changing the text.
+- Try a 61 MB file with another document open; confirm a size-limit message and no loss of the active document. Open a 1.1-million-character file and confirm limited mode disables automatic analysis.
 - Measure cold/warm startup, typing with a large document and memory after repeated document changes. Record actual values rather than assuming performance targets passed.
 
 Known preview-stage limitations: diagnostics are parser messages (which may be English), and underline entire error lines; INI uses a simple section/key=value dialect; no session recovery, installer signing, encoding chooser, Markdown scroll synchronization or arbitrary embedded scripts. Fenced code colors are available for languages recognized by ColorCode; unknown languages remain plain code. The system theme is read when preferences are applied.
