@@ -9,6 +9,13 @@ Copy-Item README.md artifacts/win-x64/README.md
 Copy-Item THIRD-PARTY-NOTICES.md artifacts/win-x64/THIRD-PARTY-NOTICES.md
 Compress-Archive -Path artifacts/win-x64/* -DestinationPath "artifacts/MarkdownPreview-$Version-win-x64.zip" -Force
 
+# Also offer a smaller package for machines with .NET 10 Desktop Runtime installed.
+dotnet publish src/MarkdownPreview/MarkdownPreview.csproj -c Release -r win-x64 --self-contained false -p:Version=$Version -o artifacts/win-x64-framework
+if ($LASTEXITCODE -ne 0) { throw 'Framework-dependent publishing failed.' }
+Copy-Item README.md artifacts/win-x64-framework/README.md
+Copy-Item THIRD-PARTY-NOTICES.md artifacts/win-x64-framework/THIRD-PARTY-NOTICES.md
+Compress-Archive -Path artifacts/win-x64-framework/* -DestinationPath "artifacts/MarkdownPreview-$Version-win-x64-framework.zip" -Force
+
 # Build the per-user installer using the signed Inno Setup installation.
 $compiler = Get-Command ISCC.exe -ErrorAction SilentlyContinue
 if (-not $compiler) {
