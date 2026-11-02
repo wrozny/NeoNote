@@ -24,7 +24,7 @@ jobs:
       - name: Package application
         shell: pwsh
         run: |
-          $version = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME.TrimStart('v') } else { '0.1.0' }
+          $version = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME.TrimStart('v') } else { '0.1.1' }
           ./scripts/package.ps1 -Version $version
       - name: Exercise WPF editor and WebView2
         shell: pwsh
@@ -33,16 +33,24 @@ jobs:
           if (-not $process.WaitForExit(90000)) { $process.Kill(); throw 'UI smoke test timed out.' }
           Get-Content artifacts/win-x64/smoke-result.txt
           if ($process.ExitCode -ne 0) { throw "UI smoke test failed: $($process.ExitCode)" }
+          $portable = Get-ChildItem artifacts/*-portable.exe | Select-Object -First 1
+          $report = Join-Path (Resolve-Path artifacts) 'single-file-smoke-result.txt'
+          $process = Start-Process $portable.FullName -ArgumentList "--smoke-test --smoke-output `"$report`"" -PassThru
+          if (-not $process.WaitForExit(90000)) { $process.Kill(); throw 'Single-file UI test timed out.' }
+          Get-Content $report
+          if ($process.ExitCode -ne 0) { throw "Single-file UI test failed: $($process.ExitCode)" }
       - name: Upload Windows packages
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: MarkdownPreview-windows
           path: |
             artifacts/*.zip
-            artifacts/*setup.exe
+            artifacts/*.exe
             artifacts/SHA256SUMS.txt
             artifacts/tests/*.trx
             artifacts/win-x64/smoke-result.txt
+            artifacts/single-file-smoke-result.txt
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
@@ -59,4 +67,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-        run: gh release create "$GITHUB_REF_NAME" artifacts/*.zip artifacts/*setup.exe artifacts/SHA256SUMS.txt --title "MarkdownPreview $GITHUB_REF_NAME" --notes "Windows x64 preview. Includes a portable package and per-user installer. WebView2 Runtime is required. Native Windows 10 acceptance checks are listed in docs/WINDOWS-ACCEPTANCE.md." --prerelease
+        run: |
+          set -euo pipefail
+          test -n "$(find artifacts -maxdepth 1 -name '*setup.exe' -size +0c -print -quit)"
+          if ! gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release create "$GITHUB_REF_NAME" --verify-tag --title "MarkdownPreview $GITHUB_REF_NAME" --notes "Download the setup.exe installer to run the application. Portable ZIPs are also attached. The framework ZIP requires .NET 10 Desktop Runtime; the installer includes .NET. All variants require Edge WebView2 Runtime. GitHub automatically adds source archives separately." --prerelease
+          fi
+          gh release upload "$GITHUB_REF_NAME" artifacts/*.zip artifacts/*.exe artifacts/SHA256SUMS.txt --clobber
+          gh release view "$GITHUB_REF_NAME" --json assets --jq '.assets[] | [.name, .size] | @tsv'
