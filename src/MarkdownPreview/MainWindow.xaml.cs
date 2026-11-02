@@ -30,6 +30,7 @@ public partial class MainWindow : Window
     private double zoom = 1;
     private bool previewNavigationPending;
     private ulong activePreviewNavigation;
+    private readonly List<string> previewTrace = [];
     private bool Dark => preferences.Theme == "Dark" || preferences.Theme == "System" &&
         Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize", "AppsUseLightTheme", 1) is int value && value == 0;
 
@@ -253,6 +254,7 @@ public partial class MainWindow : Window
             finally { parserGate.Release(); }
             if (closing || current != revision) return;
             markers.Diagnostics = result.Errors; Editor.TextArea.TextView.Redraw(); UpdateStatus();
+            TracePreview($"Rendered revision {current}, HTML length {result.Body.Length}, ready={webReady}.");
             if (format == FileFormat.Markdown && webReady) NavigatePreview(result.Body);
         }
         catch (Exception error) { if (!closing && current == revision) ShowPreviewFailure(error.Message); }
@@ -305,6 +307,7 @@ public partial class MainWindow : Window
             Preview.CoreWebView2.ProcessFailed += OnPreviewProcessFailed;
             Preview.CoreWebView2.Settings.IsZoomControlEnabled = false;
             webReady = true; ScheduleRefresh();
+            TracePreview("Browser initialized.");
         }
         catch (Exception error) { if (!closing) ShowPreviewFailure(T("PreviewUnavailable") + "\n\n" + error.Message); }
         finally { webStarting = false; }
@@ -319,6 +322,7 @@ public partial class MainWindow : Window
         if (mappedFolder is not null) Preview.CoreWebView2.SetVirtualHostNameToFolderMapping("preview.markdownpreview.invalid", mappedFolder, CoreWebView2HostResourceAccessKind.DenyCors);
         var html = Rendering.Preview(body, Dark).Replace("<head>", "<head><base href='https://preview.markdownpreview.invalid/'>", StringComparison.Ordinal);
         previewNavigationPending = true;
+        TracePreview($"Navigating generated HTML, length {html.Length}.");
         Preview.NavigateToString(html);
     }
 
@@ -334,6 +338,7 @@ public partial class MainWindow : Window
     /// <summary>Removes the startup notice only after an actual successful page navigation.</summary>
     private async void OnPreviewNavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
     {
+        TracePreview($"Navigation completed: {e.NavigationId}; active={activePreviewNavigation}; success={e.IsSuccess}; status={e.WebErrorStatus}.");
         if (closing || !previewNavigationPending || e.NavigationId != activePreviewNavigation) return;
         if (e.WebErrorStatus == CoreWebView2WebErrorStatus.OperationCanceled) return;
         if (!e.IsSuccess) { previewNavigationPending = false; ShowPreviewFailure(T("PreviewFailed") + " " + e.WebErrorStatus); return; }
@@ -394,6 +399,7 @@ public partial class MainWindow : Window
     /// <summary>Allows only the generated page inside the preview and sends external links to Windows.</summary>
     private void OnNavigation(object? sender, CoreWebView2NavigationStartingEventArgs e)
     {
+        TracePreview($"Navigation starting: {e.NavigationId}; scheme={new Uri(e.Uri).Scheme}; pending={previewNavigationPending}.");
         if (e.Uri == "about:blank" || e.Uri.StartsWith("about:blank#", StringComparison.Ordinal) || e.Uri.StartsWith("https://preview.markdownpreview.invalid/#", StringComparison.Ordinal))
         {
             if (previewNavigationPending) activePreviewNavigation = e.NavigationId;
@@ -578,7 +584,7 @@ public partial class MainWindow : Window
         }
         catch (Exception error)
         {
-            File.WriteAllText(reportPath, error.ToString());
+            File.WriteAllText(reportPath, error + "\n\nPreview lifecycle:\n" + string.Join("\n", previewTrace));
             closing = true; Application.Current.Shutdown(1);
         }
         finally { Directory.Delete(directory, true); }
@@ -641,5 +647,12 @@ public partial class MainWindow : Window
         encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
         using var output = File.Create(Path.ChangeExtension(reportPath, ".window.png"));
         encoder.Save(output);
+    }
+
+    /// <summary>Records bounded lifecycle metadata without document contents for automated test diagnosis.</summary>
+    private void TracePreview(string message)
+    {
+        if (previewTrace.Count == 40) previewTrace.RemoveAt(0);
+        previewTrace.Add(message);
     }
 }
