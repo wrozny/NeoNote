@@ -10,7 +10,11 @@ public partial class App : Application
         base.OnStartup(e);
         var window = new MainWindow();
         window.Show();
-        if (e.Args.Contains("--smoke-test")) window.RunSmokeTest();
+        if (e.Args.Contains("--smoke-test"))
+        {
+            var outputIndex = Array.IndexOf(e.Args, "--smoke-output");
+            window.RunSmokeTest(outputIndex >= 0 && outputIndex + 1 < e.Args.Length ? e.Args[outputIndex + 1] : null);
+        }
         else if (e.Args.Length > 0) window.OpenPath(e.Args[0]);
     }
 }
