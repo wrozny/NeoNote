@@ -39,9 +39,15 @@ internal static class WindowsInputProbe
         var wheel = new Input { Type = 0, Data = new InputData { Mouse = new MouseInput { Data = unchecked((uint)delta), Flags = 0x0800 } } };
         var down = new Input { Type = 1, Data = new InputData { Keyboard = new KeyboardInput { Key = 0x11 } } };
         var up = new Input { Type = 1, Data = new InputData { Keyboard = new KeyboardInput { Key = 0x11, Flags = 0x0002 } } };
-        var inputs = control ? new[] { down, wheel, up } : new[] { wheel };
+        if (control) { Send([down]); await Task.Delay(100); }
+        try { Send([wheel]); await Task.Delay(300); }
+        finally { if (control) Send([up]); }
+    }
+
+    /// <summary>Submits one verified input batch and reports failures from Windows.</summary>
+    private static void Send(Input[] inputs)
+    {
         if (SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<Input>()) != inputs.Length)
             throw new System.ComponentModel.Win32Exception();
-        await Task.Delay(300);
     }
 }
