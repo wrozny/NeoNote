@@ -1,7 +1,7 @@
 {
-  "build": "success",
-  "workflow": "https://github.com/wrozny/MarkdownPreview/actions/runs/41520397268",
-  "smoke": "success",
-  "report": "PASSED: document editing, Markdown/HTML rendering, native zoom without scrolling, out-of-window splitter drags and pane minimums, font changes without pane shrinkage, preview hide/reopen, all palettes, themed save choices and scrollbars, undoable JSON formatting, 61 MB file rejection, large-file analysis safeguards, Polish AltGr+S input and localization.",
-  "source_commit": "ce249014bdf8b477df039b2adf9d926afdabf521"
+  "source_commit": "ce249014bdf8b477df039b2adf9d926afdabf521",
+  "workflow": "https://github.com/wrozny/MarkdownPreview/actions/runs/41520397347",
+  "report": "System.InvalidOperationException: WebView2 did not initialize: Przygotowywanie podglądu…\r\n   at MarkdownPreview.MainWindow.RunSmokeTest(String reportPath)\n\nPreview lifecycle:\nBrowser initialization started: visible=True; size=511x633.\nBrowser environment created.\nRendered revision 4, HTML length 78, ready=False.",
+  "smoke": "failure",
+  "build": "success"
 }
