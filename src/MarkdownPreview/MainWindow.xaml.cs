@@ -254,7 +254,7 @@ public partial class MainWindow : Window
     /// <summary>Updates window identity and concise document information.</summary>
     private void UpdateStatus()
     {
-        Title = (document.IsDirty ? "*" : "") + (document.Path is null ? T("Untitled") : Path.GetFileName(document.Path)) + " - NeoPad";
+        Title = (document.IsDirty ? "*" : "") + (document.Path is null ? T("Untitled") : Path.GetFileName(document.Path)) + " - NeoNote";
         StatusText.Text = $"{T("Line")} {Editor.TextArea.Caret.Line}   {T("Column")} {Editor.TextArea.Caret.Column}    |    {document.Format}    |    {document.Encoding.WebName}    |    {document.LineEnding}    |    {T("Errors")}: {markers.Diagnostics.Count}";
         StatusText.ToolTip = markers.Diagnostics.Count == 0 ? T("DiagnosticHint") : string.Join("\n", markers.Diagnostics.Take(30).Select(d => $"{d.Line}:{d.Column} {d.Message}"));
         ZoomText.Text = $"{zoom:P0}";
@@ -644,7 +644,7 @@ public partial class MainWindow : Window
     internal async void RunSmokeTest(string? reportPath = null)
     {
         reportPath ??= Path.Combine(AppContext.BaseDirectory, "smoke-result.txt");
-        var directory = Path.Combine(Path.GetTempPath(), "NeoPadSmoke", Guid.NewGuid().ToString("N"));
+        var directory = Path.Combine(Path.GetTempPath(), "NeoNoteSmoke", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(directory);
         try
         {
