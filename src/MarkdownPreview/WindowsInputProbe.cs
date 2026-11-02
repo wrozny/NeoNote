@@ -50,4 +50,23 @@ internal static class WindowsInputProbe
         if (SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<Input>()) != inputs.Length)
             throw new System.ComponentModel.Win32Exception();
     }
+
+    /// <summary>Drags a captured splitter beyond its owner's left or right edge before releasing the mouse.</summary>
+    public static async Task DragOutsideAsync(FrameworkElement divider, bool right)
+    {
+        var owner = Window.GetWindow(divider);
+        owner.Activate();
+        var start = divider.PointToScreen(new Point(divider.ActualWidth / 2, divider.ActualHeight / 2));
+        if (!SetCursorPos((int)start.X, (int)start.Y)) throw new System.ComponentModel.Win32Exception();
+        Send([new Input { Data = new InputData { Mouse = new MouseInput { Flags = 0x0002 } } }]);
+        try
+        {
+            await Task.Delay(100);
+            var outside = owner.PointToScreen(new Point(right ? owner.ActualWidth + 40 : -40, divider.TranslatePoint(new Point(0, divider.ActualHeight / 2), owner).Y));
+            if (!SetCursorPos((int)outside.X, (int)outside.Y)) throw new System.ComponentModel.Win32Exception();
+            await Task.Delay(200);
+        }
+        finally { Send([new Input { Data = new InputData { Mouse = new MouseInput { Flags = 0x0004 } } }]); }
+        await Task.Delay(200);
+    }
 }
