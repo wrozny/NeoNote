@@ -2,6 +2,8 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
+using MarkdownPreview.Core;
+using Microsoft.Win32;
 
 namespace MarkdownPreview;
 
@@ -14,16 +16,28 @@ internal static class WindowTheme
 
     /// <summary>Assigns explicit palette brushes and updates an existing native window.</summary>
     public static void Apply(Window window, bool dark)
+        => Apply(window, dark ? "Dark" : "Light");
+
+    /// <summary>Resolves system preferences while keeping named dark palettes distinct.</summary>
+    public static ThemePalette Palette(string name) => AppThemes.Get(name,
+        Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize", "AppsUseLightTheme", 1) is int value && value == 0);
+
+    /// <summary>Applies a named palette to all client-area resources and native window chrome.</summary>
+    public static void Apply(Window window, string theme)
     {
-        var colors = dark
-            ? new[] { "#1E2026", "#252832", "#191B21", "#E5E7EB", "#949CAC", "#373C49", "#353C4D", "#82AAFF" }
-            : new[] { "#FAFBFD", "#F0F2F6", "#FFFFFF", "#202632", "#657086", "#D8DDE7", "#E2E8F3", "#245DC1" };
+        var palette = Palette(theme);
+        var colors = new[] { palette.Surface, palette.Panel, palette.Input, palette.Text, palette.Muted, palette.Stroke, palette.Hover, palette.Accent };
         var keys = new[] { "Surface", "Panel", "Input", "Text", "Muted", "Stroke", "Hover", "Accent" };
         for (var i = 0; i < keys.Length; i++)
             window.Resources[keys[i]] = new SolidColorBrush((Color)ColorConverter.ConvertFromString(colors[i]));
         window.SetResourceReference(Window.BackgroundProperty, "Surface");
         window.SetResourceReference(Window.ForegroundProperty, "Text");
-        ApplyTitleBar(window, dark);
+        window.Resources[SystemColors.ControlBrushKey] = window.Resources["Panel"];
+        window.Resources[SystemColors.ControlTextBrushKey] = window.Resources["Text"];
+        window.Resources[SystemColors.WindowBrushKey] = window.Resources["Input"];
+        window.Resources[SystemColors.WindowTextBrushKey] = window.Resources["Text"];
+        window.Resources[SystemColors.ScrollBarBrushKey] = window.Resources["Panel"];
+        ApplyTitleBar(window, palette.IsDark);
     }
 
     /// <summary>Applies native caption colors once a window handle exists without replacing standard window buttons.</summary>
@@ -40,7 +54,8 @@ internal static class WindowTheme
     public static void PrepareDialog(Window dialog, Window owner, bool dark)
     {
         dialog.Resources.MergedDictionaries.Add(owner.Resources);
-        Apply(dialog, dark);
+        dialog.SetResourceReference(Window.BackgroundProperty, "Surface");
+        dialog.SetResourceReference(Window.ForegroundProperty, "Text");
         dialog.SourceInitialized += (_, _) => ApplyTitleBar(dialog, dark);
     }
 }
