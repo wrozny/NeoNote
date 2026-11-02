@@ -400,6 +400,12 @@ public partial class MainWindow : Window
     private void OnNavigation(object? sender, CoreWebView2NavigationStartingEventArgs e)
     {
         TracePreview($"Navigation starting: {e.NavigationId}; scheme={new Uri(e.Uri).Scheme}; pending={previewNavigationPending}.");
+        // NavigateToString starts a host-generated data:text/html navigation before exposing about:blank.
+        if (previewNavigationPending && !e.IsUserInitiated && e.Uri.StartsWith("data:text/html", StringComparison.OrdinalIgnoreCase))
+        {
+            activePreviewNavigation = e.NavigationId;
+            return;
+        }
         if (e.Uri == "about:blank" || e.Uri.StartsWith("about:blank#", StringComparison.Ordinal) || e.Uri.StartsWith("https://preview.markdownpreview.invalid/#", StringComparison.Ordinal))
         {
             if (previewNavigationPending) activePreviewNavigation = e.NavigationId;
