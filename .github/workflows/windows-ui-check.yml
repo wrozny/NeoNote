@@ -49,6 +49,14 @@ jobs:
           if (-not (Test-Path $report)) { "FAILED: application exited with code $($process.ExitCode) before producing its smoke report." | Set-Content $report }
           Get-Content $report
           if ($process.ExitCode -ne 0) { throw "Windows UI test failed with exit code $($process.ExitCode)." }
+          $warmReport = Join-Path $env:RUNNER_TEMP 'windows-ui-warm-result.txt'
+          $process = Start-Process artifacts/windows-check/NeoNote.exe -ArgumentList "--smoke-test --smoke-output `"$warmReport`"" -PassThru
+          if (-not $process.WaitForExit(90000)) { $process.Kill(); $process.WaitForExit(); 'FAILED: warm-start test timed out.' | Add-Content $report; throw 'Warm-start test timed out.' }
+          if ($process.ExitCode -ne 0 -or -not (Test-Path $warmReport)) {
+            if (Test-Path $warmReport) { Get-Content $warmReport | Add-Content $report }
+            throw 'Warm-start test failed.'
+          }
+          'Repeated warm-start check: PASSED' | Add-Content $report
       - name: Record Windows test outcome
         if: always()
         shell: pwsh
