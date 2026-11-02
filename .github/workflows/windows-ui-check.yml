@@ -1,0 +1,68 @@
+name: Verify Windows preview and input
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/windows-ui-check.yml'
+      - 'src/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: windows-ui-check
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build Windows application
+        id: build
+        run: dotnet publish src/MarkdownPreview/MarkdownPreview.csproj -c Release -r win-x64 --self-contained true -o artifacts/windows-check
+      - name: Run actual WPF and browser test
+        id: smoke
+        shell: pwsh
+        run: |
+          $report = Join-Path $env:RUNNER_TEMP 'windows-ui-result.txt'
+          $process = Start-Process artifacts/windows-check/MarkdownPreview.exe -ArgumentList "--smoke-test --smoke-output `"$report`"" -PassThru
+          if (-not $process.WaitForExit(90000)) {
+            $process.Kill()
+            $process.WaitForExit()
+            if (-not (Test-Path $report)) { 'FAILED: UI test timed out.' | Set-Content $report }
+            Get-Content $report
+            throw 'UI test timed out.'
+          }
+          Get-Content $report
+          if ($process.ExitCode -ne 0) { throw "Windows UI test failed with exit code $($process.ExitCode)." }
+      - name: Record Windows test outcome
+        if: always()
+        shell: pwsh
+        env:
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
+          SMOKE_OUTCOME: ${{ steps.smoke.outcome }}
+        run: |
+          $sourceCommit = git rev-parse HEAD
+          $report = Join-Path $env:RUNNER_TEMP 'windows-ui-result.txt'
+          $text = if (Test-Path $report) { Get-Content $report -Raw } else { 'No smoke report was produced.' }
+          $receipt = @{
+            source_commit = $sourceCommit
+            build = $env:BUILD_OUTCOME
+            smoke = $env:SMOKE_OUTCOME
+            report = $text
+            workflow = "https://github.com/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
+          } | ConvertTo-Json
+          git fetch origin release-receipts
+          git switch -C release-receipts FETCH_HEAD
+          New-Item -ItemType Directory -Force docs/checks | Out-Null
+          $receipt | Set-Content "docs/checks/$sourceCommit.json"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "docs/checks/$sourceCommit.json"
+          git commit -m 'Recorded Windows preview validation' -m "- Executed WPF and WebView2 against sample documents`n- Preserved test outcome and failure details"
+          git push origin release-receipts
