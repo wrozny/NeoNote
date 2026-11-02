@@ -22,6 +22,15 @@ public sealed class RenderingTests
         Assert.Contains("script-src 'none'", Rendering.Preview(html, true));
     }
 
+    /// <summary>Checks that a supported code fence receives token markup while unknown languages remain readable.</summary>
+    [Fact]
+    public void CodeFencesReceiveSyntaxColors()
+    {
+        var html = Rendering.MarkdownBody("```csharp\npublic class Example { string Name = \"value\"; }\n```\n\n```unknown-language\n<escaped>\n```");
+        Assert.Contains("<span", html);
+        Assert.Contains("&lt;escaped&gt;", html);
+    }
+
     /// <summary>Ensures each structured format rejects an actual malformed document.</summary>
     [Theory]
     [InlineData(FileFormat.Json, "{\n\"x\": }")]
