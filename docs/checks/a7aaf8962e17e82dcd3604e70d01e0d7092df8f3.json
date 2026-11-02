@@ -1,0 +1,7 @@
+{
+  "report": "PASSED: document editing, Markdown/HTML rendering, native zoom without scrolling, out-of-window splitter drags and pane minimums, font changes without pane shrinkage, preview hide/reopen, all palettes, themed save choices and scrollbars, undoable JSON formatting, 61 MB file rejection, large-file analysis safeguards and localization.",
+  "source_commit": "a7aaf8962e17e82dcd3604e70d01e0d7092df8f3",
+  "workflow": "https://github.com/wrozny/MarkdownPreview/actions/runs/41514772192",
+  "smoke": "success",
+  "build": "success"
+}
