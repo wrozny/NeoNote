@@ -1,0 +1,34 @@
+name: Inspect Windows validation
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/inspect-windows-check.yml']
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect latest Windows run and preserve diagnostic metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/$GH_REPO/actions/workflows/windows-ui-check.yml/runs?per_page=5" > /tmp/windows-runs.json
+          run_id="$(jq -r '.workflow_runs[0].id' /tmp/windows-runs.json)"
+          gh run view "$run_id" --json status,conclusion,headSha,url,jobs > /tmp/windows-status.json
+          git fetch origin release-receipts
+          git switch -C release-receipts FETCH_HEAD
+          cp /tmp/windows-status.json docs/checks/windows-status.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/checks/windows-status.json
+          git commit -m 'Recorded Windows validation status' -m $'- Inspected runner and step outcomes\n- Preserved the latest Windows run URL'
+          git push origin release-receipts
