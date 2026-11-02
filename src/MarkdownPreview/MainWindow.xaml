@@ -22,7 +22,7 @@
       <Grid Grid.Column="2" x:Name="PreviewHost" Background="{DynamicResource Surface}">
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions>
         <Border Padding="16,10" BorderBrush="{DynamicResource Stroke}" BorderThickness="0,0,0,1"><TextBlock x:Name="PreviewHeading" Foreground="{DynamicResource Muted}" FontSize="12"/></Border>
-        <web:WebView2 x:Name="Preview" Grid.Row="1" Visibility="Visible"/>
+        <web:WebView2CompositionControl x:Name="Preview" Grid.Row="1" Visibility="Visible"/>
         <Border x:Name="PreviewNotice" Grid.Row="1" Panel.ZIndex="1" Background="{DynamicResource Surface}" Padding="24">
           <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="380">
             <TextBlock x:Name="PreviewMessage" TextWrapping="Wrap" Margin="0,0,0,14" Foreground="{DynamicResource Text}"/>
