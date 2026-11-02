@@ -20,6 +20,7 @@ public partial class MainWindow : Window
     private Preferences preferences = Preferences.Load();
     private readonly DispatcherTimer refreshTimer = new() { Interval = TimeSpan.FromMilliseconds(200) };
     private readonly EditorHighlighting markers = new();
+    private readonly SemaphoreSlim parserGate = new(1, 1);
     private bool webReady;
     private bool webStarting;
     private bool closing;
@@ -235,10 +236,17 @@ public partial class MainWindow : Window
     private async void OnRefreshTick(object? sender, EventArgs e)
     {
         refreshTimer.Stop();
-        var current = revision; var text = document.Text; var format = document.Format;
+        var current = revision; var text = document.Text; var format = document.Format; var dark = Dark;
         try
         {
-            var result = await Task.Run(() => (Errors: Rendering.Validate(text, format), Body: format == FileFormat.Markdown ? Rendering.MarkdownBody(text) : ""));
+            await parserGate.WaitAsync();
+            (IReadOnlyList<Diagnostic> Errors, string Body) result;
+            try
+            {
+                if (closing || current != revision) return;
+                result = await Task.Run(() => (Rendering.Validate(text, format), format == FileFormat.Markdown ? Rendering.MarkdownBody(text, dark) : ""));
+            }
+            finally { parserGate.Release(); }
             if (closing || current != revision) return;
             markers.Diagnostics = result.Errors; Editor.TextArea.TextView.Redraw(); UpdateStatus();
             if (format == FileFormat.Markdown && webReady) NavigatePreview(result.Body);
@@ -438,6 +446,8 @@ public partial class MainWindow : Window
             if (!await loaded.Task.WaitAsync(TimeSpan.FromSeconds(20))) throw new InvalidOperationException("Preview navigation failed.");
             var heading = await Preview.CoreWebView2.ExecuteScriptAsync("document.querySelector('h1').textContent");
             if (JsonSerializer.Deserialize<string>(heading) != "Smoke heading") throw new InvalidOperationException("Markdown heading did not render.");
+            var htmlHeading = await Preview.CoreWebView2.ExecuteScriptAsync("document.querySelector('h2').textContent");
+            if (JsonSerializer.Deserialize<string>(htmlHeading) != "HTML heading") throw new InvalidOperationException("Embedded HTML heading did not render.");
             document.Format = FileFormat.Json; ApplyPreferences();
             if (PreviewHost.Visibility != Visibility.Collapsed) throw new InvalidOperationException("JSON did not hide preview.");
             preferences.Language = "en"; ApplyPreferences();
