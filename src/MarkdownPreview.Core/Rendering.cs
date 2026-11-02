@@ -17,7 +17,7 @@ public static class Rendering
     private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
 
     /// <summary>Renders Markdown and sanitizes embedded HTML before insertion into a fixed page.</summary>
-    public static string MarkdownBody(string text)
+    public static string MarkdownBody(string text, bool dark = true)
     {
         var sanitizer = new HtmlSanitizer();
         foreach (var tag in new[] { "details", "summary", "input" }) sanitizer.AllowedTags.Add(tag);
@@ -27,7 +27,7 @@ public static class Rendering
         {
             var languageName = code.ClassList.FirstOrDefault(c => c.StartsWith("language-"))?[9..];
             var language = languageName is null ? null : Languages.FindById(languageName);
-            if (language is not null) code.InnerHtml = new ColorCode.HtmlFormatter().GetHtmlString(code.TextContent, language);
+            if (language is not null) code.InnerHtml = new ColorCode.HtmlFormatter(dark ? ColorCode.Styling.StyleDictionary.DefaultDark : ColorCode.Styling.StyleDictionary.DefaultLight).GetHtmlString(code.TextContent, language);
         }
         return parsed.Body!.InnerHtml;
     }
