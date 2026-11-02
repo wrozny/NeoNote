@@ -6,7 +6,9 @@ A compact Windows text editor inspired by Windows 10 Notepad, with a live Markdo
 
 Target: Windows 10 22H2 x64 or newer. Install the Microsoft Edge WebView2 Evergreen Runtime for Markdown preview. Portable self-contained builds include .NET; framework-dependent development builds require .NET 10 Desktop Runtime.
 
-Open `MarkdownPreview.exe` or pass a filename as its first argument. The per-user installer registers a Start menu shortcut and an Explorer Open With entry without changing the default Markdown application.
+Download the `setup.exe` installer or the directly runnable `portable.exe` from the release assets. GitHub's automatically generated source archives are not application packages. The single portable EXE includes .NET and extracts its bundled files on first launch; the installed and extracted-folder variants avoid that extraction step.
+
+Open `MarkdownPreview.exe` or pass a filename as its first argument. The per-user installer registers a Start menu shortcut and an Explorer Open With entry without changing the default Markdown application. Ctrl+wheel and Ctrl+plus/minus zoom the editor and preview; Ctrl+0 resets to 100%.
 
 ## Development
 
@@ -24,7 +26,9 @@ dotnet run --project src/MarkdownPreview -- "C:\Documents\notes.md"
 ./scripts/package.ps1
 ```
 
-Packaging additionally requires Inno Setup 6. Output: `artifacts/`, with a self-contained portable ZIP, a smaller `-framework.zip` requiring .NET 10 Desktop Runtime, a self-contained per-user installer and SHA-256 checksums. WebView2 remains a shared prerequisite. The GitHub workflow builds Windows packages on pushes; `v*` tags publish a prerelease after successful build/tests and a real WPF/WebView2 smoke run.
+Packaging additionally requires Inno Setup 6. Output: `artifacts/`, with a self-contained portable ZIP, a smaller `-framework.zip` requiring .NET 10 Desktop Runtime, a self-contained per-user installer, a directly runnable portable EXE and SHA-256 checksums. WebView2 remains a shared prerequisite. The GitHub workflow builds Windows packages on pushes; `v*` tags publish a prerelease after successful build/tests and real WPF/WebView2 smoke runs for both folder and single-file distributions.
+
+For testing on your own computer, see [local Windows testing](docs/LOCAL-TESTING.md). Each portable ZIP includes `diagnose-windows.ps1`.
 
 Linux can run core tests and cross-compile the Windows executable, but cannot run WPF. Complete [Windows acceptance checks](docs/WINDOWS-ACCEPTANCE.md) on the target OS before treating a preview as production-ready.
 
