@@ -21,6 +21,7 @@ OutputBaseFilename=NeoPad-{#AppVersion}-win-x64-setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
+SetupIconFile=..\src\MarkdownPreview\Assets\NeoPad.ico
 UninstallDisplayIcon={app}\NeoPad.exe
 ChangesAssociations=yes
 
