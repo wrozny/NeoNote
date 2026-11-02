@@ -6,15 +6,15 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>0.2.0</Version>
-    <AssemblyName>NeoPad</AssemblyName>
-    <Product>NeoPad</Product>
+    <Version>0.3.0</Version>
+    <AssemblyName>NeoNote</AssemblyName>
+    <Product>NeoNote</Product>
     <Description>A minimal Windows editor with live Markdown preview.</Description>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <ApplicationIcon>Assets/NeoPad.ico</ApplicationIcon>
+    <ApplicationIcon>Assets/NeoNote.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Resource Include="Assets/NeoPad.ico" />
+    <Resource Include="Assets/NeoNote.ico" />
     <ProjectReference Include="../MarkdownPreview.Core/MarkdownPreview.Core.csproj" />
     <PackageReference Include="AvalonEdit" Version="6.3.1.120" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3537.50" />
