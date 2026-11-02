@@ -1,7 +1,7 @@
 {
-  "smoke": "success",
-  "source_commit": "acc5572a7b096f49332a565e4a9062e1fc6dacb5",
   "build": "success",
-  "workflow": "https://github.com/wrozny/NeoNote/actions/runs/41521668041",
-  "report": "PASSED: document editing, Markdown/HTML rendering, native zoom without scrolling, out-of-window splitter drags and pane minimums, font changes without pane shrinkage, preview hide/reopen, all palettes, themed save choices and scrollbars, undoable JSON formatting, 61 MB file rejection, large-file analysis safeguards, Polish AltGr+S input and localization.Repeated warm-start check: PASSED\r\n"
+  "report": "PASSED: document editing, Markdown/HTML rendering, native zoom without scrolling, out-of-window splitter drags and pane minimums, font changes without pane shrinkage, preview hide/reopen, all palettes, themed save choices and scrollbars, undoable JSON formatting, 61 MB file rejection, large-file analysis safeguards, Polish AltGr+S input and localization.Repeated warm-start check: PASSED\r\n",
+  "source_commit": "acc5572a7b096f49332a565e4a9062e1fc6dacb5",
+  "smoke": "success",
+  "workflow": "https://github.com/wrozny/NeoNote/actions/runs/41521668174"
 }
