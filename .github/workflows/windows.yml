@@ -24,12 +24,12 @@ jobs:
       - name: Package application
         shell: pwsh
         run: |
-          $version = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME.TrimStart('v') } else { '0.1.2' }
+          $version = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME.TrimStart('v') } else { '0.2.0' }
           ./scripts/package.ps1 -Version $version
       - name: Exercise WPF editor and WebView2
         shell: pwsh
         run: |
-          $process = Start-Process artifacts/win-x64/MarkdownPreview.exe -ArgumentList '--smoke-test' -PassThru
+          $process = Start-Process artifacts/win-x64/NeoPad.exe -ArgumentList '--smoke-test' -PassThru
           if (-not $process.WaitForExit(90000)) { $process.Kill(); throw 'UI smoke test timed out.' }
           Get-Content artifacts/win-x64/smoke-result.txt
           if ($process.ExitCode -ne 0) { throw "UI smoke test failed: $($process.ExitCode)" }
@@ -43,7 +43,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: MarkdownPreview-windows
+          name: NeoPad-windows
           path: |
             artifacts/*.zip
             artifacts/*.exe
