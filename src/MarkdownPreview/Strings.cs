@@ -5,6 +5,14 @@ public static class Strings
 {
     private static readonly Dictionary<string, (string Pl, string En)> Labels = new()
     {
+        ["ClosePreview"] = ("Zamknij podgląd", "Close preview"), ["OpenPreview"] = ("Otwórz podgląd", "Open preview"),
+        ["FormatDocument"] = ("Sformatuj plik", "Format document"), ["FormattingSupport"] = ("Formatowanie JSON i XML (4 spacje)", "Format JSON and XML (4 spaces)"),
+        ["FormattingError"] = ("Nie można sformatować pliku z błędną składnią. Treść pozostała bez zmian.", "Cannot format invalid syntax. Document text was left unchanged."),
+        ["Discard"] = ("Nie zapisuj", "Don't save"), ["Cancel"] = ("Anuluj", "Cancel"), ["Yes"] = ("Tak", "Yes"), ["No"] = ("Nie", "No"),
+        ["Midnight"] = ("Północ", "Midnight"), ["Graphite"] = ("Grafit", "Graphite"), ["Forest"] = ("Las", "Forest"), ["Warm"] = ("Ciepły", "Warm"),
+        ["FileTooLarge"] = ("Plik przekracza bezpieczny limit 20 MB i nie został otwarty. Bieżący dokument pozostał bez zmian.", "This file exceeds the safe 20 MB limit and was not opened. The current document was left unchanged."),
+        ["LargeMode"] = ("Tryb dużego pliku", "Large-file mode"),
+        ["LargeModeHint"] = ("Duży dokument lub bardzo długie wiersze: kolorowanie, automatyczna walidacja i podgląd są wyłączone dla płynności edycji. Formatowanie jest dostępne do miliona znaków.", "Large document or very long lines: highlighting, automatic validation and preview are disabled to keep editing responsive. Formatting is available up to one million characters."),
         ["Editor"] = ("EDYTOR", "EDITOR"), ["Preview"] = ("PODGLĄD MARKDOWN", "MARKDOWN PREVIEW"),
         ["Retry"] = ("Ponów podgląd", "Retry preview"),
         ["PreviewFailed"] = ("Nie udało się wyświetlić podglądu.", "Preview could not be displayed."),
