@@ -1,6 +1,6 @@
 # Third-party components
 
-MarkdownPreview uses these independently licensed components. Their licenses and notices remain applicable to redistributions.
+NeoPad uses these independently licensed components. Their licenses and notices remain applicable to redistributions.
 
 | Component | License | Source |
 | --- | --- | --- |
