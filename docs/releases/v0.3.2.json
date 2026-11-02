@@ -1,0 +1,17 @@
+{
+  "tag": "v0.3.2",
+  "url": "https://github.com/wrozny/NeoNote/releases/tag/v0.3.2",
+  "draft": false,
+  "prerelease": true,
+  "source_commit": "1807181b1d8b378ec95fa1708ce41667d7402fa2",
+  "workflow": "https://github.com/wrozny/NeoNote/actions/runs/41531417418",
+  "download_checksum_verified": true,
+  "assets": [
+    {
+      "name": "NeoNote-0.3.2-win-x64-portable.exe",
+      "size": 83749031,
+      "url": "https://github.com/wrozny/NeoNote/releases/download/v0.3.2/NeoNote-0.3.2-win-x64-portable.exe",
+      "sha256": "6ab897572419382936471818205b600a28e7a38a23a502d425bd57cf8e988295"
+    }
+  ]
+}
