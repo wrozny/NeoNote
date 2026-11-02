@@ -5,6 +5,10 @@ public static class Strings
 {
     private static readonly Dictionary<string, (string Pl, string En)> Labels = new()
     {
+        ["Editor"] = ("EDYTOR", "EDITOR"), ["Preview"] = ("PODGLĄD MARKDOWN", "MARKDOWN PREVIEW"),
+        ["Retry"] = ("Ponów podgląd", "Retry preview"),
+        ["PreviewFailed"] = ("Nie udało się wyświetlić podglądu.", "Preview could not be displayed."),
+        ["ZoomHint"] = ("Ctrl + kółko myszy: przybliżenie · Ctrl+0: 100%", "Ctrl + mouse wheel: zoom · Ctrl+0: 100%"),
         ["File"] = ("_Plik", "_File"), ["New"] = ("_Nowy", "_New"), ["Window"] = ("Nowe _okno", "New _window"),
         ["Open"] = ("_Otwórz…", "_Open…"), ["Save"] = ("_Zapisz", "_Save"), ["SaveAs"] = ("Zapisz _jako…", "Save _as…"),
         ["Exit"] = ("Za_kończ", "E_xit"), ["Edit"] = ("_Edycja", "_Edit"), ["Undo"] = ("_Cofnij", "_Undo"),
