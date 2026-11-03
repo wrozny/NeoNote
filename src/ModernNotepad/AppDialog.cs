@@ -1,7 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 
-namespace MarkdownPreview;
+namespace ModernNotepad;
 
 public sealed record DialogAction(string Label, MessageBoxResult Result, bool IsDefault = false, bool IsCancel = false);
 
