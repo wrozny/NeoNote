@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace MarkdownPreview.Core;
+namespace ModernNotepad.Core;
 
 public enum FileFormat { Markdown, Json, Xml, Ini, Toml, Text }
 
