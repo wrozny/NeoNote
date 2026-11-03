@@ -1,0 +1,7 @@
+{
+  "workflow": "https://github.com/wrozny/NeoNote/actions/runs/41617042730",
+  "build": "success",
+  "report": "PASSED: document editing, Markdown/HTML rendering, native zoom without scrolling, out-of-window splitter drags and pane minimums, font changes without pane shrinkage, preview hide/reopen, all palettes, themed save choices and scrollbars, undoable JSON formatting, 61 MB file rejection, large-file analysis safeguards, Polish AltGr+S input and localization.Repeated warm-start check: PASSED\r\n",
+  "source_commit": "54533e0386fca376c41552935e6a6753bb882c99",
+  "smoke": "success"
+}
