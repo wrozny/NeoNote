@@ -1,4 +1,4 @@
-namespace MarkdownPreview.Core;
+namespace ModernNotepad.Core;
 
 /// <summary>Shared colors used by native editor controls and generated preview pages.</summary>
 public sealed record ThemePalette(bool IsDark, string Surface, string Panel, string Input, string Text, string Muted, string Stroke, string Hover, string Accent)
