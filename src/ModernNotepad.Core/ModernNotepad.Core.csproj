@@ -3,7 +3,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <AssemblyName>NeoNote.Core</AssemblyName>
+    <AssemblyName>ModernNotepad.Core</AssemblyName>
+    <RootNamespace>ModernNotepad.Core</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Markdig" Version="0.41.3" />
