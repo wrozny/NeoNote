@@ -3,7 +3,7 @@
 Target: Windows 10 22H2 x64 with current Edge WebView2 Runtime. A Linux cross-build does not establish these results. Record OS, runtime versions, package checksum, and results before promoting a prerelease.
 
 - Install per user without administrator rights; find NeoNote through Start search. Uninstall and confirm the Start shortcut and application registration disappear while documents remain intact.
-- Launch a blank window. Confirm `*Bez tytułu - MarkdownPreview`, a responsive editor, and Markdown preview.
+- Launch a blank window. Confirm `*Bez tytułu - NeoNote`, a responsive editor, and Markdown preview.
 - Check Ctrl+wheel in both panes, Ctrl+plus/minus, Ctrl+0 and zoom bounds (50–300%); confirm ordinary wheel input still scrolls.
 - Check the native title bar and every nested menu and settings dropdown in both light and dark themes. Test theme changes while the application is open.
 - Open Markdown, then JSON, then Markdown again; confirm the preview is visible and updated. Test cold startup with a command-line Markdown path and restore after a failed navigation.
