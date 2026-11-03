@@ -18,9 +18,9 @@ jobs:
         with:
           dotnet-version: '10.0.x'
       - name: Test document behavior and parsers
-        run: dotnet test tests/MarkdownPreview.Tests/MarkdownPreview.Tests.csproj -c Release --logger trx --results-directory artifacts/tests
+        run: dotnet test tests/ModernNotepad.Tests/ModernNotepad.Tests.csproj -c Release --logger trx --results-directory artifacts/tests
       - name: Build application
-        run: dotnet build src/MarkdownPreview/MarkdownPreview.csproj -c Release -warnaserror
+        run: dotnet build src/ModernNotepad/ModernNotepad.csproj -c Release -warnaserror
       - name: Package application
         shell: pwsh
         run: |
