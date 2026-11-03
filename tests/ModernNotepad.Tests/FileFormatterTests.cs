@@ -1,9 +1,9 @@
 using System.Text.Json;
 using System.Xml;
-using MarkdownPreview.Core;
+using ModernNotepad.Core;
 using Xunit;
 
-namespace MarkdownPreview.Tests;
+namespace ModernNotepad.Tests;
 
 public sealed class FileFormatterTests
 {
