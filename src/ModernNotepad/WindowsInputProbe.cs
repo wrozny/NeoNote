@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Windows;
 
-namespace MarkdownPreview;
+namespace ModernNotepad;
 
 /// <summary>Sends real wheel input during Windows-only smoke tests rather than invoking zoom commands directly.</summary>
 internal static class WindowsInputProbe
