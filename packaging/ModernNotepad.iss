@@ -21,7 +21,7 @@ OutputBaseFilename=NeoNote-{#AppVersion}-win-x64-setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
-SetupIconFile=..\src\MarkdownPreview\Assets\NeoNote.ico
+SetupIconFile=..\src\ModernNotepad\Assets\NeoNote.ico
 UninstallDisplayIcon={app}\NeoNote.exe
 ChangesAssociations=yes
 
