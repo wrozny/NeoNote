@@ -8,6 +8,7 @@
     <Nullable>enable</Nullable>
     <Version>0.3.2</Version>
     <AssemblyName>NeoNote</AssemblyName>
+    <RootNamespace>ModernNotepad</RootNamespace>
     <Product>NeoNote</Product>
     <Description>A minimal Windows editor with live Markdown preview.</Description>
     <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -15,7 +16,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Resource Include="Assets/NeoNote.ico" />
-    <ProjectReference Include="../MarkdownPreview.Core/MarkdownPreview.Core.csproj" />
+    <ProjectReference Include="../ModernNotepad.Core/ModernNotepad.Core.csproj" />
     <PackageReference Include="AvalonEdit" Version="6.3.1.120" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3537.50" />
   </ItemGroup>
