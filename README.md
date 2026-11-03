@@ -1,6 +1,6 @@
 # NeoNote
 
-NeoNote (formerly NeoPad / MarkdownPreview) is a compact Windows text editor inspired by Windows 10 Notepad, with a live Markdown/HTML preview and format-aware editing. The default interface is Polish and dark; English and a light theme are available in Settings.
+NeoNote is a compact Windows text editor inspired by Windows 10 Notepad, with a live Markdown/HTML preview and format-aware editing. The default interface is Polish and dark; English and a light theme are available in Settings.
 
 ## Run on Windows
 
@@ -12,7 +12,7 @@ Open `NeoNote.exe` or pass a filename as its first argument. The per-user instal
 
 ## Development
 
-Internal projects, namespaces and tests use **ModernNotepad**. **NeoNote** is the product identity: its executable name, icons, installer registration and settings directory remain stable. Legacy `NeoPad` and `MarkdownPreview` settings paths are deliberately retained for migration. Markdown preview remains a feature name. Release publication is manual (`workflow_dispatch`); ordinary source refactoring does not publish or replace releases.
+The project is named **NeoNote**. Build commands below use its internal `ModernNotepad` source layout. Settings from earlier versions remain compatible. Release publication is manual (`workflow_dispatch`); ordinary source refactoring does not publish or replace releases.
 
 Install .NET 10 SDK. Use the existing checkout; cloud tasks are already isolated and do not require a Git worktree.
 
@@ -28,7 +28,7 @@ dotnet run --project src/ModernNotepad -- "C:\Documents\notes.md"
 ./scripts/package.ps1
 ```
 
-Packaging additionally requires Inno Setup 6. Output: `artifacts/`, with a self-contained portable ZIP, a smaller `-framework.zip` requiring .NET 10 Desktop Runtime, a self-contained per-user installer, a directly runnable portable EXE and SHA-256 checksums. WebView2 remains a shared prerequisite. The GitHub workflow builds Windows packages on pushes; `v*` tags publish a prerelease after successful build/tests and real WPF/WebView2 smoke runs for both folder and single-file distributions.
+Packaging additionally requires Inno Setup 6. Output: `artifacts/`, with a self-contained portable ZIP, a smaller `-framework.zip` requiring .NET 10 Desktop Runtime, a self-contained per-user installer, a directly runnable portable EXE and SHA-256 checksums. WebView2 remains a shared prerequisite. The GitHub workflow builds Windows packages on pushes. To publish a prerelease, manually run the executable release workflow with the desired version tag; publication requires successful build/tests and real WPF/WebView2 smoke runs.
 
 For testing on your own computer, see [local Windows testing](docs/LOCAL-TESTING.md). Each portable ZIP includes `diagnose-windows.ps1`.
 
@@ -42,7 +42,7 @@ Markdown preview has a 280-DIP minimum width. Close it with the header's × butt
 
 The Format menu's **Format document** command (Ctrl+Shift+F) supports JSON and XML with four-space indentation. It preserves line endings, is one undoable edit, and never saves automatically. Invalid input remains unchanged. Other formats retain their contents without attempting a potentially destructive conversion.
 
-Themes include Dark, Midnight, Graphite, Forest, Warm, Light and System. Named palettes apply to editor controls, scrollbars, Markdown preview and save/discard/cancel prompts. Existing NeoPad preferences are read automatically if no NeoNote settings exist yet, with a MarkdownPreview fallback; new settings are stored under `%LOCALAPPDATA%\NeoNote`.
+Themes include Dark, Midnight, Graphite, Forest, Warm, Light and System. Named palettes apply to editor controls, scrollbars, Markdown preview and save/discard/cancel prompts. Preferences from earlier versions are imported automatically if no current settings exist yet; settings are stored under `%LOCALAPPDATA%\NeoNote`.
 
 AltGr combinations are reserved for text input, including Polish `ś` with AltGr+S; they never trigger application Ctrl shortcuts. The graphite notebook artwork in `src/ModernNotepad/Assets` is embedded as a transparent multiresolution Windows icon in the executable, window and installer. Windows tests extract both shell icon sizes from the built EXE and check alpha transparency, as well as the window icon. Dark-theme hyperlinks use a dedicated light-blue color in the editor and preview, including visited links.
 
