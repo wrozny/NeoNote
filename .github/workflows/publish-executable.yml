@@ -1,15 +1,11 @@
 name: Publish executable release
 
 on:
-  push:
-    branches: [main]
-    paths: [.github/workflows/publish-executable.yml]
   workflow_dispatch:
     inputs:
       tag:
         description: Existing version tag to publish
         required: true
-        default: v0.3.2
 
 permissions:
   contents: write
@@ -22,32 +18,32 @@ jobs:
   verify-windows:
     uses: ./.github/workflows/windows-ui-check.yml
     with:
-      ref: ${{ inputs.tag || 'v0.3.2' }}
+      ref: ${{ inputs.tag }}
   publish:
     needs: verify-windows
     runs-on: ubuntu-latest
     env:
-      RELEASE_TAG: ${{ inputs.tag || 'v0.3.2' }}
+      RELEASE_TAG: ${{ inputs.tag }}
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag || 'v0.3.2' }}
+          ref: ${{ inputs.tag }}
           fetch-depth: 0
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
       - name: Test core behavior
         id: tests
-        run: dotnet test tests/MarkdownPreview.Tests/MarkdownPreview.Tests.csproj -c Release
+        run: dotnet test tests/ModernNotepad.Tests/ModernNotepad.Tests.csproj -c Release
       - name: Build the Windows executable
         id: build
         shell: bash
         run: |
           set -euo pipefail
           version="${RELEASE_TAG#v}"
-          dotnet publish src/MarkdownPreview/MarkdownPreview.csproj -c Release -r win-x64 --self-contained true -p:Version="$version" -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -p:EnableCompressionInSingleFile=true -o artifacts/executable
+          dotnet publish src/ModernNotepad/ModernNotepad.csproj -c Release -r win-x64 --self-contained true -p:Version="$version" -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -p:EnableCompressionInSingleFile=true -o artifacts/executable
           cp artifacts/executable/NeoNote.exe "artifacts/NeoNote-$version-win-x64-portable.exe"
           cd artifacts
           sha256sum "NeoNote-$version-win-x64-portable.exe" > SHA256SUMS.txt
