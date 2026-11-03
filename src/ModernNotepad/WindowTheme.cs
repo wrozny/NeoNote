@@ -2,10 +2,10 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
-using MarkdownPreview.Core;
+using ModernNotepad.Core;
 using Microsoft.Win32;
 
-namespace MarkdownPreview;
+namespace ModernNotepad;
 
 /// <summary>Applies matching client-area brushes and native Windows title-bar appearance.</summary>
 internal static class WindowTheme
