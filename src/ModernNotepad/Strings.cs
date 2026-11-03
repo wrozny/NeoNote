@@ -1,4 +1,4 @@
-namespace MarkdownPreview;
+namespace ModernNotepad;
 
 /// <summary>Provides all application labels in Polish and English.</summary>
 public static class Strings
