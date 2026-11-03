@@ -4,7 +4,7 @@ using System.Text.Json;
 using System.Xml;
 using System.Xml.Linq;
 
-namespace MarkdownPreview.Core;
+namespace ModernNotepad.Core;
 
 /// <summary>Formats structured documents without silently dropping comments or changing unsupported formats.</summary>
 public static class FileFormatter
