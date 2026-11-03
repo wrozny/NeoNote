@@ -1,6 +1,6 @@
 using System.Windows;
 
-namespace MarkdownPreview;
+namespace ModernNotepad;
 
 public partial class App : Application
 {
