@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace MarkdownPreview.Core;
+namespace ModernNotepad.Core;
 
 /// <summary>Defines trusted host commands; document-provided JavaScript stays disabled.</summary>
 public static class PreviewScripts
