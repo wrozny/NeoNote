@@ -1,9 +1,9 @@
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Rendering;
-using MarkdownPreview.Core;
+using ModernNotepad.Core;
 
-namespace MarkdownPreview;
+namespace ModernNotepad;
 
 /// <summary>Installs language rules and draws validation markers on erroneous lines.</summary>
 public sealed class EditorHighlighting : DocumentColorizingTransformer
