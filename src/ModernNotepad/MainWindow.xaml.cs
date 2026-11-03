@@ -9,9 +9,9 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Win32;
-using MarkdownPreview.Core;
+using ModernNotepad.Core;
 
-namespace MarkdownPreview;
+namespace ModernNotepad;
 
 /// <summary>Coordinates window commands while delegating document and parsing work to the core.</summary>
 public partial class MainWindow : Window
@@ -256,7 +256,7 @@ public partial class MainWindow : Window
     /// <summary>Updates window identity and concise document information.</summary>
     private void UpdateStatus()
     {
-        Title = (document.IsDirty ? "*" : "") + (document.Path is null ? T("Untitled") : Path.GetFileName(document.Path)) + " - NeoNote";
+        Title = (document.IsDirty ? "*" : "") + (document.Path is null ? T("Untitled") : Path.GetFileName(document.Path)) + " - " + ProductInfo.Name;
         StatusText.Text = $"{T("Line")} {Editor.TextArea.Caret.Line}   {T("Column")} {Editor.TextArea.Caret.Column}    |    {document.Format}    |    {document.Encoding.WebName}    |    {document.LineEnding}    |    {T("Errors")}: {markers.Diagnostics.Count}";
         StatusText.ToolTip = markers.Diagnostics.Count == 0 ? T("DiagnosticHint") : string.Join("\n", markers.Diagnostics.Take(30).Select(d => $"{d.Line}:{d.Column} {d.Message}"));
         ZoomText.Text = $"{zoom:P0}";
@@ -652,7 +652,7 @@ public partial class MainWindow : Window
     internal async void RunSmokeTest(string? reportPath = null)
     {
         reportPath ??= Path.Combine(AppContext.BaseDirectory, "smoke-result.txt");
-        var directory = Path.Combine(Path.GetTempPath(), "NeoNoteSmoke", Guid.NewGuid().ToString("N"));
+        var directory = Path.Combine(Path.GetTempPath(), "ModernNotepadSmoke", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(directory);
         try
         {
