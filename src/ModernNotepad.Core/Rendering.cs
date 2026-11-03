@@ -7,7 +7,7 @@ using Tomlyn;
 using AngleSharp.Html.Parser;
 using ColorCode;
 
-namespace MarkdownPreview.Core;
+namespace ModernNotepad.Core;
 
 public sealed record Diagnostic(int Line, int Column, string Message);
 
