@@ -1,7 +1,7 @@
 using System.IO;
 using System.Text.Json;
 
-namespace MarkdownPreview;
+namespace ModernNotepad;
 
 /// <summary>Stores non-secret per-user editor preferences.</summary>
 public sealed class Preferences
@@ -22,6 +22,7 @@ public sealed class Preferences
             if (!File.Exists(path))
             {
                 var root = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                // Historical on-disk names are compatibility identifiers, not current project names.
                 path = new[] { "NeoPad", "MarkdownPreview" }.Select(name => Path.Combine(root, name, "settings.json"))
                     .FirstOrDefault(File.Exists) ?? path;
             }
