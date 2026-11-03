@@ -12,17 +12,19 @@ Open `NeoNote.exe` or pass a filename as its first argument. The per-user instal
 
 ## Development
 
+Internal projects, namespaces and tests use **ModernNotepad**. **NeoNote** is the product identity: its executable name, icons, installer registration and settings directory remain stable. Legacy `NeoPad` and `MarkdownPreview` settings paths are deliberately retained for migration. Markdown preview remains a feature name. Release publication is manual (`workflow_dispatch`); ordinary source refactoring does not publish or replace releases.
+
 Install .NET 10 SDK. Use the existing checkout; cloud tasks are already isolated and do not require a Git worktree.
 
 ```sh
-dotnet build src/MarkdownPreview/MarkdownPreview.csproj -c Release
-dotnet test tests/MarkdownPreview.Tests/MarkdownPreview.Tests.csproj -c Release
+dotnet build src/ModernNotepad/ModernNotepad.csproj -c Release
+dotnet test tests/ModernNotepad.Tests/ModernNotepad.Tests.csproj -c Release
 ```
 
 On Windows:
 
 ```powershell
-dotnet run --project src/MarkdownPreview -- "C:\Documents\notes.md"
+dotnet run --project src/ModernNotepad -- "C:\Documents\notes.md"
 ./scripts/package.ps1
 ```
 
@@ -42,7 +44,7 @@ The Format menu's **Format document** command (Ctrl+Shift+F) supports JSON and X
 
 Themes include Dark, Midnight, Graphite, Forest, Warm, Light and System. Named palettes apply to editor controls, scrollbars, Markdown preview and save/discard/cancel prompts. Existing NeoPad preferences are read automatically if no NeoNote settings exist yet, with a MarkdownPreview fallback; new settings are stored under `%LOCALAPPDATA%\NeoNote`.
 
-AltGr combinations are reserved for text input, including Polish `ś` with AltGr+S; they never trigger application Ctrl shortcuts. The graphite notebook artwork in `src/MarkdownPreview/Assets` is embedded as a transparent multiresolution Windows icon in the executable, window and installer. Windows tests extract both shell icon sizes from the built EXE and check alpha transparency, as well as the window icon. Dark-theme hyperlinks use a dedicated light-blue color in the editor and preview, including visited links.
+AltGr combinations are reserved for text input, including Polish `ś` with AltGr+S; they never trigger application Ctrl shortcuts. The graphite notebook artwork in `src/ModernNotepad/Assets` is embedded as a transparent multiresolution Windows icon in the executable, window and installer. Windows tests extract both shell icon sizes from the built EXE and check alpha transparency, as well as the window icon. Dark-theme hyperlinks use a dedicated light-blue color in the editor and preview, including visited links.
 
 Files above **20 MiB** are rejected before their text is allocated; the current document stays open. Accepted documents above one million characters, 10,000 lines or 20,000 characters on a line use limited mode with automatic highlighting, validation and preview disabled. Explicit JSON/XML formatting remains available up to one million characters, which can make a minified file readable and restore normal editing mode.
 
@@ -54,9 +56,9 @@ INI accepts comments beginning with `;` or `#`, section headers and `key=value` 
 
 ## Structure
 
-- `src/MarkdownPreview.Core`: UI-independent document, encoding, parsing and rendering services.
-- `src/MarkdownPreview`: WPF views, window command coordinator, highlighting, translations and user preferences.
-- `tests/MarkdownPreview.Tests`: real filesystem round trips, malformed/valid parser cases and rendered HTML checks.
+- `src/ModernNotepad.Core`: UI-independent document, encoding, parsing and rendering services.
+- `src/ModernNotepad`: WPF views, window command coordinator, highlighting, translations and user preferences.
+- `tests/ModernNotepad.Tests`: real filesystem round trips, malformed/valid parser cases and rendered HTML checks.
 - `packaging` / `scripts`: reproducible Windows distribution.
 
 The initial UI uses a window coordinator rather than a full MVVM framework. Core services are isolated so commands can move into view models as the UI grows. See the acceptance document for current limitations. Dependencies and upstream license references are listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
