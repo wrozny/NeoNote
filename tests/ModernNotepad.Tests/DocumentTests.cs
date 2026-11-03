@@ -1,12 +1,12 @@
 using System.Text;
-using MarkdownPreview.Core;
+using ModernNotepad.Core;
 using Xunit;
 
-namespace MarkdownPreview.Tests;
+namespace ModernNotepad.Tests;
 
 public sealed class DocumentTests : IDisposable
 {
-    private readonly string directory = Path.Combine(Path.GetTempPath(), "MarkdownPreviewTests", Guid.NewGuid().ToString("N"));
+    private readonly string directory = Path.Combine(Path.GetTempPath(), "ModernNotepadTests", Guid.NewGuid().ToString("N"));
 
     /// <summary>Creates an isolated directory for each test instance.</summary>
     public DocumentTests() => Directory.CreateDirectory(directory);
